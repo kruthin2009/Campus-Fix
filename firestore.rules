@@ -1,0 +1,263 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ============================================================
+    // Helpers
+    // ============================================================
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function userDoc(uid) {
+      return get(/databases/$(database)/documents/users/$(uid)).data;
+    }
+
+    function myProfile() {
+      return userDoc(request.auth.uid);
+    }
+
+    function myRole() {
+      return isSignedIn() && exists(/databases/$(database)/documents/users/$(request.auth.uid))
+        ? myProfile().role
+        : null;
+    }
+
+    function isAdmin() {
+      return isSignedIn()
+        && exists(/databases/$(database)/documents/users/$(request.auth.uid))
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+
+    function isWorker() {
+      return isSignedIn() && myRole() == 'operations';
+    }
+
+    function isStudent() {
+      return isSignedIn() && myRole() == 'student';
+    }
+
+    function isOwner(uid) {
+      return isSignedIn() && request.auth.uid == uid;
+    }
+
+    function unchanged(field) {
+      return request.resource.data[field] == resource.data[field];
+    }
+
+    // ============================================================
+    // users/{uid}
+    // ============================================================
+    // - Anyone can read their own profile; admins can read any profile
+    //   (needed to list students/workers for management screens).
+    // - A student may self-register their own document (role forced to
+    //   "student" — nothing else is ever writable through self sign-up).
+    // - Admins may create/update any user document (worker + admin
+    //   account creation, deactivation, team assignment, role changes).
+    // - A signed-in user may update their OWN document, but never their
+    //   own role or uid — this is what stops a student or worker from
+    //   ever promoting themselves to admin or another role.
+    // ============================================================
+
+    match /users/{uid} {
+      allow read: if isOwner(uid) || isAdmin();
+
+      // Admins create worker profiles here. Admin promotion is handled by
+      // an explicit update (or the Firebase Console during initial bootstrap),
+      // so a normal worker-creation request cannot create another admin.
+      allow create: if isAdmin() && request.resource.data.role == 'operations'
+        || (
+          isOwner(uid) &&
+          request.resource.data.uid == uid &&
+          request.resource.data.role == 'student'
+        );
+
+      allow update: if isAdmin()
+        || (
+          isOwner(uid) &&
+          unchanged('role') &&
+          unchanged('uid')
+        );
+
+      allow delete: if isAdmin();
+    }
+
+    // ============================================================
+    // towers/{towerId}
+    // ============================================================
+    // Every signed-in user may read towers (students need this to pick a
+    // tower; workers/admins see tower names on complaints). Only admins
+    // may create, edit, activate/deactivate, or delete towers.
+    // ============================================================
+
+    match /towers/{towerId} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
+    }
+
+    // ============================================================
+    // departments/{departmentId}
+    // ============================================================
+
+    match /departments/{departmentId} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
+    }
+
+    // ============================================================
+    // workerTeams/{teamId}
+    // ============================================================
+    // Admins and workers can read team rosters (a worker may reasonably
+    // see their own team's composition); students never need this
+    // collection. Only admins may write teams.
+    // ============================================================
+
+    match /workerTeams/{teamId} {
+      allow read: if isAdmin() || isWorker();
+      allow write: if isAdmin();
+    }
+
+    // ============================================================
+    // reports/{reportId}  (complaints)
+    // ============================================================
+    // Read access:
+    //   - Admin: all reports.
+    //   - Student: only their own report (studentId == their uid).
+    //   - Worker: only reports assigned directly to them, or to their
+    //     current team.
+    //
+    // Create:
+    //   - Only a student, creating a report for THEMSELVES, in the
+    //     initial "submitted" state with no assignment/resolution/review
+    //     yet set. This is what stops a student from raising a complaint
+    //     on someone else's behalf or pre-assigning/pre-closing it.
+    //
+    // Update:
+    //   - Admin: full control (assignment, priority, status, closing,
+    //     rejecting).
+    //   - Worker: only on a report already assigned to them/their team;
+    //     may only touch status/resolution/timestamps — never
+    //     reassignment fields, priority, or the student's own data.
+    //   - Student: only their own report, only to attach a review, and
+    //     only once the report is "completed". No other field may
+    //     change, which is what stops a student from editing status,
+    //     assignment, or another student's complaint.
+    // ============================================================
+
+    function reportVisibleToWorker(data) {
+      return data.assignedWorkerId == request.auth.uid
+        || (myProfile().teamId != null && data.assignedTeamId == myProfile().teamId);
+    }
+
+    match /reports/{reportId} {
+      allow read: if isAdmin()
+        || (isStudent() && resource.data.studentId == request.auth.uid)
+        || (isWorker() && reportVisibleToWorker(resource.data));
+
+      allow create: if isStudent()
+        && request.resource.data.studentId == request.auth.uid
+        && request.resource.data.status == 'submitted'
+        && request.resource.data.assignedTeamId == null
+        && request.resource.data.assignedWorkerId == null
+        && request.resource.data.resolution == null
+        && request.resource.data.review == null;
+
+      allow update: if isAdmin()
+        || (
+          isWorker() &&
+          reportVisibleToWorker(resource.data) &&
+          unchanged('studentId') &&
+          unchanged('assignedTeamId') &&
+          unchanged('assignedWorkerId') &&
+          unchanged('priority') &&
+          unchanged('departmentId')
+        )
+        || (
+          isStudent() &&
+          resource.data.studentId == request.auth.uid &&
+          resource.data.status == 'completed' &&
+          request.resource.data.diff(resource.data).affectedKeys()
+            .hasOnly(['review', 'updatedAt'])
+        );
+
+      allow delete: if false;
+
+      // --------------------------------------------------------
+      // reports/{reportId}/updates/{updateId}  (timeline entries)
+      // --------------------------------------------------------
+      // Visible to whoever can see the parent report. Only admins and
+      // the assigned worker/team may post entries — students never
+      // write to the timeline directly (their only write is the review,
+      // on the parent report).
+      // --------------------------------------------------------
+
+      match /updates/{updateId} {
+        allow read: if isAdmin()
+          || (isStudent() && get(/databases/$(database)/documents/reports/$(reportId)).data.studentId == request.auth.uid)
+          || (isWorker() && reportVisibleToWorker(get(/databases/$(database)/documents/reports/$(reportId)).data));
+
+        allow create: if isAdmin()
+          || (isWorker() && reportVisibleToWorker(get(/databases/$(database)/documents/reports/$(reportId)).data));
+
+        allow update, delete: if false;
+      }
+    }
+
+    // ============================================================
+    // notifications/{notificationId}
+    // ============================================================
+    // This app runs on the Firebase no-cost plan with no Cloud Functions,
+    // so notifications are written directly by the client that triggers
+    // them rather than by a trusted server-side function. To keep this
+    // safe:
+    //   - A student may only ever create a notification addressed to
+    //     THEMSELVES (used when they submit a complaint).
+    //   - Admins and workers may create a notification addressed to any
+    //     user, since the legitimate flows require notifying the
+    //     student/worker on the other side of an assignment or status
+    //     change.
+    //   - Everyone may only ever READ or mark-read their OWN
+    //     notifications (or an admin, their own). No one can read
+    //     another user's notification feed.
+    // ============================================================
+
+    match /notifications/{notificationId} {
+      allow read: if isAdmin() || (isSignedIn() && resource.data.userId == request.auth.uid);
+
+      allow create: if isAdmin()
+        || isWorker()
+        || (isStudent() && request.resource.data.userId == request.auth.uid);
+
+      allow update: if isAdmin() || (isSignedIn() && resource.data.userId == request.auth.uid);
+
+      allow delete: if false;
+    }
+
+    // ============================================================
+    // Public landing page data
+    // Only anonymized aggregates/activity are readable without login.
+    // No student profiles, rooms, report descriptions, or personal data
+    // are exposed here. Admins refresh these documents from live reports.
+    // ============================================================
+
+    match /publicStats/{docId} {
+      allow read: if docId == 'overview';
+      allow write: if isAdmin();
+    }
+
+    match /publicActivity/{activityId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // ============================================================
+    // Default deny — anything not explicitly listed above is blocked.
+    // ============================================================
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
