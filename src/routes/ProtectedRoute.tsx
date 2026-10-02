@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import { Navigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { LoadingScreen } from "../components/common/Common";
-import { isAdministrativeRole, type UserRole } from "../types/models";
+import type { UserRole } from "../types/models";
 
 /**
  * Wrap any route that requires the user to be signed in AND hold one of the

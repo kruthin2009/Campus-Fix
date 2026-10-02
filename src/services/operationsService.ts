@@ -1,4 +1,4 @@
-import { addDoc, deleteDoc, doc, getDocs, query, serverTimestamp, updateDoc, where } from "firebase/firestore";
+import { addDoc, deleteDoc, doc, getDocs, serverTimestamp, updateDoc } from "firebase/firestore";
 import { db } from "../firebase/config";
 import { typedCollection } from "../firebase/firestore";
 import { toAppError } from "../utils/errors";
@@ -8,7 +8,7 @@ export interface MaintenanceItem { id:string; title:string; location:string; tow
 export interface AuditEntry { id:string; actorId:string; actorName:string; actorRole:string; action:string; targetType:string; targetId?:string|null; summary:string; createdAt:any; }
 
 export async function createAnnouncement(input: Omit<Announcement,"id"|"createdAt">){
-  try { const ref=await addDoc(typedCollection<Announcement>("announcements"),{...input,createdAt:serverTimestamp()}); return ref.id; }
+  try { const ref=await addDoc(typedCollection<Announcement>("announcements"),{id:"",...input,createdAt:serverTimestamp() as unknown as Announcement["createdAt"]}); return ref.id; }
   catch(e){throw toAppError(e,"Unable to publish announcement.");}
 }
 export async function listAnnouncements(){
@@ -18,12 +18,12 @@ export async function listAnnouncements(){
 export async function deleteAnnouncement(id:string){ try{await deleteDoc(doc(db,"announcements",id));}catch(e){throw toAppError(e,"Unable to delete announcement.");} }
 
 export async function createMaintenance(input: Omit<MaintenanceItem,"id"|"createdAt"|"updatedAt">){
-  try{const ref=await addDoc(typedCollection<MaintenanceItem>("maintenanceSchedules"),{...input,createdAt:serverTimestamp(),updatedAt:serverTimestamp()});return ref.id;}catch(e){throw toAppError(e,"Unable to create maintenance schedule.");}
+  try{const ref=await addDoc(typedCollection<MaintenanceItem>("maintenanceSchedules"),{id:"",...input,createdAt:serverTimestamp() as unknown as MaintenanceItem["createdAt"],updatedAt:serverTimestamp() as unknown as MaintenanceItem["updatedAt"]});return ref.id;}catch(e){throw toAppError(e,"Unable to create maintenance schedule.");}
 }
 export async function listMaintenance(){try{const s=await getDocs(typedCollection<MaintenanceItem>("maintenanceSchedules"));return s.docs.map(d=>({...d.data(),id:d.id})).sort((a,b)=>(a.nextDue?.toMillis?.()??0)-(b.nextDue?.toMillis?.()??0));}catch(e){throw toAppError(e,"Unable to load maintenance schedules.");}}
 export async function completeMaintenance(id:string,nextDue:Date){try{await updateDoc(doc(db,"maintenanceSchedules",id),{nextDue,isActive:true,updatedAt:serverTimestamp()});}catch(e){throw toAppError(e,"Unable to update maintenance schedule.");}}
 
-export async function writeAudit(input: Omit<AuditEntry,"id"|"createdAt">){try{await addDoc(typedCollection<AuditEntry>("auditLogs"),{...input,createdAt:serverTimestamp()});}catch(e){console.warn("Audit log unavailable",e);}}
+export async function writeAudit(input: Omit<AuditEntry,"id"|"createdAt">){try{await addDoc(typedCollection<AuditEntry>("auditLogs"),{id:"",...input,createdAt:serverTimestamp() as unknown as AuditEntry["createdAt"]});}catch(e){console.warn("Audit log unavailable",e);}}
 export async function listAuditLogs(){try{const s=await getDocs(typedCollection<AuditEntry>("auditLogs"));return s.docs.map(d=>({...d.data(),id:d.id})).sort((a,b)=>(b.createdAt?.toMillis?.()??0)-(a.createdAt?.toMillis?.()??0)).slice(0,200);}catch(e){throw toAppError(e,"Unable to load audit logs.");}}
 
 export function exportCsv(filename:string, rows:Record<string,unknown>[]){
