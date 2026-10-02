@@ -1,0 +1,4 @@
+CampusFix
+Version: V1.10.2
+Release patch: V1.10.2-r3
+Purpose: visible version and policy/rules access on public home and login; service-worker update reliability.

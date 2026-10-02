@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /student
+Disallow: /worker
+Disallow: /profile-missing
+Disallow: /forgot-password
+Sitemap: https://campusfixwoxsen.vercel.app/sitemap.xml

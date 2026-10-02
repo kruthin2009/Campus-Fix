@@ -1,0 +1,73 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() { return request.auth != null; }
+    function hasUser() { return signedIn() && exists(/databases/$(database)/documents/users/$(request.auth.uid)); }
+    function role() { return hasUser() ? get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role : null; }
+    function admin() { return hasUser() && (role() == 'admin' || role() == 'administrative' || role() == 'administrator'); }
+    function worker() { return hasUser() && role() == 'operations'; }
+    function student() { return hasUser() && role() == 'student'; }
+    function owner(uid) { return signedIn() && request.auth.uid == uid; }
+    function changedOnly(fields) { return request.resource.data.diff(resource.data).affectedKeys().hasOnly(fields); }
+    function workerCanSee(data) { return data.assignedWorkerId == request.auth.uid || (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.teamId != null && data.assignedTeamId == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.teamId); }
+
+    match /users/{uid} {
+      allow read: if owner(uid) || admin();
+      allow create: if (admin() && (request.resource.data.role == 'operations' || request.resource.data.role == 'administrative' || request.resource.data.role == 'administrator')) || (owner(uid) && request.resource.data.uid == uid && request.resource.data.role == 'student');
+      allow update: if admin() || (owner(uid) && changedOnly(['name','phone','department','roomNumber','className','semester','updatedAt']));
+      allow delete: if admin();
+    }
+
+    match /towers/{id} { allow read: if signedIn(); allow write: if admin(); }
+    match /departments/{id} { allow read: if signedIn(); allow write: if admin(); }
+    match /workerTeams/{id} { allow read: if admin() || worker(); allow write: if admin(); }
+
+    match /reports/{id} {
+      allow read: if admin() || (student() && resource.data.studentId == request.auth.uid) || (worker() && workerCanSee(resource.data));
+      allow create: if student()
+        && request.resource.data.studentId == request.auth.uid
+        && request.resource.data.status == 'submitted'
+        && request.resource.data.keys().hasAll(['studentId','studentName','studentRoomNumber','towerId','towerName','roomNumber','departmentId','departmentName','title','description','priority','status','photoUrl','assignedTeamId','assignedTeamName','assignedWorkerId','assignedWorkerName','resolution','review','createdAt','updatedAt']);
+      allow update: if admin()
+        || (worker() && workerCanSee(resource.data) && changedOnly(['status','resolution','updatedAt']))
+        || (student() && resource.data.studentId == request.auth.uid && resource.data.status == 'completed' && changedOnly(['review','updatedAt']));
+      allow delete: if false;
+
+      match /updates/{updateId} {
+        allow read: if admin() || (student() && get(/databases/$(database)/documents/reports/$(id)).data.studentId == request.auth.uid) || (worker() && workerCanSee(get(/databases/$(database)/documents/reports/$(id)).data));
+        allow create: if admin() || (worker() && workerCanSee(get(/databases/$(database)/documents/reports/$(id)).data));
+        allow update, delete: if false;
+      }
+    }
+
+    match /notifications/{id} {
+      allow read: if admin() || (signedIn() && resource.data.userId == request.auth.uid);
+      allow create: if admin() || worker() || (student() && request.resource.data.userId == request.auth.uid);
+      allow update: if admin() || (signedIn() && resource.data.userId == request.auth.uid && request.resource.data.userId == resource.data.userId && changedOnly(['isRead']));
+      allow delete: if false;
+    }
+
+    match /publicStats/{id} { allow read: if id == 'overview'; allow write: if admin(); }
+    match /publicActivity/{id} { allow read: if true; allow write: if admin(); }
+
+    // Campus operations modules
+    match /announcements/{id} {
+      // Announcements are campus-wide but still require an authenticated CampusFix profile.
+      // Both legacy admin and the V1.10.2 administrative role may publish/manage them.
+      allow read: if signedIn();
+      allow create, update, delete: if admin();
+    }
+    match /maintenanceSchedules/{id} {
+      allow read: if admin() || worker();
+      allow create, update, delete: if admin();
+    }
+    match /auditLogs/{id} {
+      allow read: if admin();
+      allow create: if admin();
+      allow update, delete: if false;
+    }
+
+    match /{document=**} { allow read, write: if false; }
+  }
+}
