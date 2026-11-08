@@ -50,4 +50,82 @@ export function getPredictiveInsights(reports: Report[]) {
   return {towerHotspot, categoryHotspot, pending, urgent};
 }
 
+
+export interface MaintenanceRiskSignal {
+  key: string;
+  towerName: string;
+  departmentName: string;
+  roomNumber: string;
+  occurrences: number;
+  openCount: number;
+  latestAt: number;
+  reason: string;
+  recommendation: string;
+  level: "watch" | "elevated";
+}
+
+export interface PredictiveMaintenanceInsights {
+  recentCount: number;
+  previousCount: number;
+  changePercent: number | null;
+  recurring: MaintenanceRiskSignal[];
+  towerTrend: Array<{ towerName: string; recent: number; previous: number; change: number | null }>;
+  dataWindowDays: number;
+  dataQuality: "limited" | "usable";
+}
+
+function timestampMillis(value: unknown): number {
+  if (value && typeof value === "object" && "toMillis" in value && typeof (value as {toMillis?: unknown}).toMillis === "function") {
+    return (value as {toMillis: () => number}).toMillis();
+  }
+  if (value instanceof Date) return value.getTime();
+  return 0;
+}
+
+/**
+ * Evidence-based maintenance risk signals from complaint history.
+ * This is trend analysis, not a machine-learning forecast or a guarantee of failure.
+ */
+export function getPredictiveMaintenanceInsights(
+  reports: Report[], now = Date.now(), windowDays = 30,
+): PredictiveMaintenanceInsights {
+  const day = 24 * 60 * 60 * 1000;
+  const currentStart = now - windowDays * day;
+  const previousStart = now - 2 * windowDays * day;
+  const dated = reports.map(report => ({ report, created: timestampMillis(report.createdAt) })).filter(x => x.created > 0);
+  const recent = dated.filter(x => x.created >= currentStart);
+  const previous = dated.filter(x => x.created >= previousStart && x.created < currentStart);
+  const changePercent = previous.length === 0 ? (recent.length ? null : 0) : Math.round(((recent.length - previous.length) / previous.length) * 100);
+
+  const buckets = new Map<string, { towerName: string; departmentName: string; roomNumber: string; reports: typeof dated }>();
+  for (const item of dated.filter(x => x.created >= now - 90 * day)) {
+    const r = item.report;
+    const room = (r.roomNumber || "Unspecified room").trim();
+    const key = `${r.towerId}|${r.departmentId}|${room.toLowerCase()}`;
+    const bucket = buckets.get(key) ?? { towerName: r.towerName || "Unknown tower", departmentName: r.departmentName || "General", roomNumber: room, reports: [] };
+    bucket.reports.push(item);
+    buckets.set(key, bucket);
+  }
+  const recurring = [...buckets.entries()].filter(([, b]) => b.reports.length >= 2).map(([key, b]) => {
+    const openCount = b.reports.filter(x => !["completed", "closed", "rejected"].includes(x.report.status)).length;
+    const occurrences = b.reports.length;
+    const level = occurrences >= 4 || openCount >= 2 ? "elevated" as const : "watch" as const;
+    return {
+      key, towerName: b.towerName, departmentName: b.departmentName, roomNumber: b.roomNumber,
+      occurrences, openCount, latestAt: Math.max(...b.reports.map(x => x.created)), level,
+      reason: `${occurrences} complaints in this tower, department and room over the last 90 days${openCount ? `; ${openCount} remain active` : ""}.`,
+      recommendation: level === "elevated" ? "Schedule an on-site inspection and investigate the underlying cause before closing further requests." : "Include this location in the next routine maintenance inspection.",
+    };
+  }).sort((a,b) => b.occurrences - a.occurrences || b.openCount - a.openCount).slice(0, 8);
+
+  const towerNames = new Set(dated.map(x => x.report.towerName || "Unknown tower"));
+  const towerTrend = [...towerNames].map(towerName => {
+    const r = recent.filter(x => x.report.towerName === towerName).length;
+    const p = previous.filter(x => x.report.towerName === towerName).length;
+    return { towerName, recent: r, previous: p, change: p === 0 ? (r ? null : 0) : Math.round(((r-p)/p)*100) };
+  }).sort((a,b) => b.recent-a.recent).slice(0, 5);
+
+  return { recentCount: recent.length, previousCount: previous.length, changePercent, recurring, towerTrend, dataWindowDays: windowDays, dataQuality: dated.length >= 10 ? "usable" : "limited" };
+}
+
 export function statusLabel(status: ReportStatus) { return status.replace("_"," ").replace(/\b\w/g,c=>c.toUpperCase()); }

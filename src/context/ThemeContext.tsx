@@ -12,8 +12,12 @@ const ThemeContext = createContext<ThemeContextValue | null>(null);
 const STORAGE_KEY = "campusfix-theme";
 
 function getInitialTheme(): Theme {
-  const saved = window.localStorage.getItem(STORAGE_KEY);
-  if (saved === "light" || saved === "dark") return saved;
+  try {
+    const saved = window.localStorage.getItem(STORAGE_KEY);
+    if (saved === "light" || saved === "dark") return saved;
+  } catch {
+    // Continue with the system preference when browser storage is unavailable.
+  }
   return window.matchMedia?.("(prefers-color-scheme: dark)").matches ? "dark" : "light";
 }
 
@@ -27,14 +31,18 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     document.documentElement.dataset.theme = theme;
     document.documentElement.style.colorScheme = theme;
 
-    const themeColor = theme === "dark" ? "#080808" : "#f7f7f5";
+    const themeColor = theme === "dark" ? "#101722" : "#f5f7fa";
     const themeMeta = document.querySelector<HTMLMetaElement>('meta[name="theme-color"]');
     if (themeMeta) themeMeta.content = themeColor;
 
     const appleStatusMeta = document.querySelector<HTMLMetaElement>('meta[name="apple-mobile-web-app-status-bar-style"]');
     if (appleStatusMeta) appleStatusMeta.content = theme === "dark" ? "black-translucent" : "default";
 
-    window.localStorage.setItem(STORAGE_KEY, theme);
+    try {
+      window.localStorage.setItem(STORAGE_KEY, theme);
+    } catch {
+      // Theme still applies for this session when storage is unavailable.
+    }
   }, [theme]);
 
   const value = useMemo(() => ({ theme, setTheme, toggleTheme }), [theme]);

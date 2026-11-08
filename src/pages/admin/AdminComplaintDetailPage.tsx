@@ -9,6 +9,9 @@ import {
   changeReportPriority,
   closeReport,
   rejectReport,
+  listReopenRequests,
+  reviewReopenRequest,
+  type ReopenRequest,
   subscribeToReport,
 } from "../../services/reportService";
 import { listActiveDepartments } from "../../services/departmentService";
@@ -48,6 +51,7 @@ export function AdminComplaintDetailPage() {
   const [rejectReason, setRejectReason] = useState("");
   const [showReject, setShowReject] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [reopenRequests, setReopenRequests] = useState<ReopenRequest[]>([]);
 
   useEffect(() => {
     if (!reportId) return;
@@ -63,6 +67,31 @@ export function AdminComplaintDetailPage() {
     );
     return unsubscribe;
   }, [reportId]);
+
+  useEffect(() => {
+    if (!report) return;
+    let cancelled = false;
+    listReopenRequests(report.id)
+      .then((items) => { if (!cancelled) setReopenRequests(items); })
+      .catch(() => { if (!cancelled) setReopenRequests([]); });
+    return () => { cancelled = true; };
+  }, [report?.id, report?.updatedAt]);
+
+  async function handleReviewReopen(requestId: string, decision: "approved" | "declined") {
+    if (!report || !profile) return;
+    setBusy(true);
+    try {
+      await reviewReopenRequest(report, requestId, decision, {
+        id: profile.uid, name: profile.name, role: profile.role,
+      });
+      setReopenRequests((items) => items.filter((item) => item.id !== requestId));
+      showToast(decision === "approved" ? "Complaint reopened." : "Reopening request declined.", "success");
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : "Unable to review request.", "error");
+    } finally {
+      setBusy(false);
+    }
+  }
 
   useEffect(() => {
     let cancelled = false;
@@ -443,6 +472,21 @@ export function AdminComplaintDetailPage() {
               ))}
             </div>
           </section>
+
+          {reopenRequests.length > 0 && (
+            <section className="card">
+              <h3>Student reopening requests</h3>
+              {reopenRequests.map((request) => (
+                <div key={request.id} className="stacked-buttons">
+                  <p>{request.message || "The student requested another review."}</p>
+                  <div className="button-row">
+                    <button className="btn btn--primary" disabled={busy} onClick={() => handleReviewReopen(request.id, "approved")}>Approve & Reopen</button>
+                    <button className="btn btn--secondary" disabled={busy} onClick={() => handleReviewReopen(request.id, "declined")}>Decline</button>
+                  </div>
+                </div>
+              ))}
+            </section>
+          )}
 
           <section className="card">
             <h3>Actions</h3>

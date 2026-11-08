@@ -1,4 +1,4 @@
-const CACHE_NAME = "campusfix-shell-v1102-r5";
+const CACHE_NAME = "campusfix-shell-v201-r1";
 const APP_SHELL = [
   "/",
   "/manifest.webmanifest",

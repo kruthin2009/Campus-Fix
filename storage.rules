@@ -1,28 +1,42 @@
 rules_version = '2';
 service firebase.storage {
   match /b/{bucket}/o {
-    function signedIn() {
-      return request.auth != null;
-    }
-
+    function signedIn() { return request.auth != null; }
+    function profile() { return firestore.get(/databases/(default)/documents/users/$(request.auth.uid)); }
     function admin() {
-      return signedIn()
-        && firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data.role in ['admin', 'administrative', 'administrator'];
+      return signedIn() && profile().data.role in ['admin', 'administrative', 'administrator'];
     }
-
+    function worker() { return signedIn() && profile().data.role == 'operations'; }
+    function validImage() {
+      return request.resource != null
+        && request.resource.size <= 5 * 1024 * 1024
+        && request.resource.contentType.matches('image/(jpeg|png|webp)');
+    }
     match /tower-images/{towerId}/{fileName} {
       allow read: if signedIn();
-      allow create: if admin()
-        && request.resource.size <= 5 * 1024 * 1024
-        && request.resource.contentType.matches('image/(jpeg|png|webp)');
-      allow update: if admin()
-        && request.resource.size <= 5 * 1024 * 1024
-        && request.resource.contentType.matches('image/(jpeg|png|webp)');
+      allow create, update: if admin() && validImage();
       allow delete: if admin();
     }
-
-    match /{allPaths=**} {
-      allow read, write: if false;
+    // Student complaint attachments: reports/{studentUid}/{fileName}
+    match /reports/{studentUid}/{fileName} {
+      allow read: if signedIn();
+      allow create: if signedIn() && request.auth.uid == studentUid
+        && profile().data.role == 'student' && validImage();
+      allow update, delete: if false;
     }
+    // Worker completion evidence: reports/{reportId}/completion-{fileName}
+    match /reports/{reportId}/{fileName} {
+      function reportDoc() { return firestore.get(/databases/(default)/documents/reports/$(reportId)); }
+      function assignedWorker() { return worker() && reportDoc().data.assignedWorkerId == request.auth.uid; }
+      function assignedTeam() {
+        return worker() && profile().data.teamId != null
+          && reportDoc().data.assignedTeamId == profile().data.teamId;
+      }
+      allow read: if signedIn();
+      allow create: if (assignedWorker() || assignedTeam())
+        && fileName.matches('completion-.*') && validImage();
+      allow update, delete: if false;
+    }
+    match /{allPaths=**} { allow read, write: if false; }
   }
 }

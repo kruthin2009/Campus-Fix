@@ -105,6 +105,27 @@ export function WorkerDashboardPage() {
         <p>Complaints assigned to you{worker?.teamName ? ` and ${worker.teamName}` : ""}.</p>
       </div>
 
+      {reports && (
+        <div className="card-grid" aria-label="Workload summary">
+          <div className="card">
+            <span className="muted">Assigned / pending</span>
+            <strong>{reports.filter((r) => r.status === "assigned").length}</strong>
+          </div>
+          <div className="card">
+            <span className="muted">In progress</span>
+            <strong>{reports.filter((r) => r.status === "in_progress").length}</strong>
+          </div>
+          <div className="card">
+            <span className="muted">Completed</span>
+            <strong>{reports.filter((r) => r.status === "completed" || r.status === "closed").length}</strong>
+          </div>
+          <div className="card">
+            <span className="muted">Urgent active</span>
+            <strong>{reports.filter((r) => r.priority === "urgent" && r.status !== "completed" && r.status !== "closed" && r.status !== "rejected").length}</strong>
+          </div>
+        </div>
+      )}
+
       <div className="tab-bar">
         {BUCKETS.map((b) => (
           <button

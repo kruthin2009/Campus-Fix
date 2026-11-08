@@ -1,10 +1,9 @@
-import { Navigate, Route, BrowserRouter, Routes } from "react-router-dom";
+import { Route, BrowserRouter, Routes } from "react-router-dom";
 import { Component, type ErrorInfo, type ReactNode } from "react";
-import { AuthProvider, useAuth } from "./context/AuthContext";
+import { AuthProvider } from "./context/AuthContext";
 import { ToastProvider } from "./context/ToastContext";
 import { ThemeProvider } from "./context/ThemeContext";
-import { ProtectedRoute, portalHomeForRole } from "./routes/ProtectedRoute";
-import { LoadingScreen } from "./components/common/Common";
+import { ProtectedRoute } from "./routes/ProtectedRoute";
 
 import { LoginPage } from "./pages/auth/LoginPage";
 import { SignUpPage } from "./pages/auth/SignUpPage";
@@ -42,6 +41,7 @@ import { CookieBanner } from "./components/common/CookieBanner";
 import { AnalyticsLoader } from "./components/common/AnalyticsLoader";
 import { AdminOperationsPage } from "./pages/admin/AdminOperationsPage";
 import { AdminAnnouncementsPage } from "./pages/admin/AdminAnnouncementsPage";
+import { AdminCampusIntelligencePage } from "./pages/admin/AdminCampusIntelligencePage";
 
 
 class AppErrorBoundary extends Component<
@@ -75,18 +75,10 @@ class AppErrorBoundary extends Component<
   }
 }
 
-function RootRedirect() {
-  const { firebaseUser, profile, status } = useAuth();
-  if (status === "loading") return <LoadingScreen label="Loading CampusFix..." />;
-  if (!firebaseUser) return <PublicHomePage />;
-  if (status === "profile-missing") return <Navigate to="/profile-missing" replace />;
-  return <Navigate to={portalHomeForRole(profile?.role)} replace />;
-}
-
 function AppRoutes() {
   return (
     <Routes>
-      <Route path="/" element={<RootRedirect />} />
+      <Route path="/" element={<PublicHomePage />} />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/signup" element={<SignUpPage />} />
       <Route path="/forgot-password" element={<ForgotPasswordPage />} />
@@ -130,6 +122,7 @@ function AppRoutes() {
         <Route path="users" element={<AdminUsersPage />} />
         <Route path="settings" element={<AdminSettingsPage />} />
         <Route path="smart" element={<AdminSmartCenterPage />} />
+        <Route path="campus-intelligence" element={<AdminCampusIntelligencePage />} />
         <Route path="operations" element={<AdminOperationsPage />} />
         <Route path="announcements" element={<AdminAnnouncementsPage />} />
       </Route>

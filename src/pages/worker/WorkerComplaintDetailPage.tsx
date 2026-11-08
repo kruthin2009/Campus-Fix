@@ -35,6 +35,14 @@ export function WorkerComplaintDetailPage() {
   const [workSummary, setWorkSummary] = useState("");
   const [resolutionDescription, setResolutionDescription] = useState("");
   const [completionPhoto, setCompletionPhoto] = useState<File | null>(null);
+  const [checklist, setChecklist] = useState<string[]>([]);
+  const completionChecklist = [
+    "Issue inspected and cause identified",
+    "Required repair or maintenance completed",
+    "Area cleaned and made safe",
+    "Work tested after completion",
+    "Student-facing resolution notes prepared",
+  ];
 
   useEffect(() => {
     if (!reportId) return;
@@ -116,6 +124,7 @@ export function WorkerComplaintDetailPage() {
         photoFile: completionPhoto,
         completedBy: worker.uid,
         completedByName: worker.name,
+        checklist,
       });
       showToast("Complaint marked as completed.", "success");
       setShowComplete(false);
@@ -173,7 +182,16 @@ export function WorkerComplaintDetailPage() {
               </div>
             </dl>
             {report.photoUrl && (
-              <img src={report.photoUrl} alt="Complaint" className="detail-photo" />
+              <div>
+                <p className="muted">Before — student complaint photo</p>
+                <img src={report.photoUrl} alt="Original complaint before maintenance" className="detail-photo" />
+              </div>
+            )}
+            {report.resolution?.photoUrl && (
+              <div>
+                <p className="muted">After — worker completion photo</p>
+                <img src={report.resolution.photoUrl} alt="After maintenance completion" className="detail-photo" />
+              </div>
             )}
           </section>
 
@@ -272,6 +290,24 @@ export function WorkerComplaintDetailPage() {
                   </p>
                 )}
               </label>
+              <section className="card" aria-label="Completion checklist">
+                <h4>Maintenance completion checklist</h4>
+                <p className="muted">Tick the checks completed before submitting the work report.</p>
+                <div className="stacked-form">
+                  {completionChecklist.map((item) => (
+                    <label key={item} className="field" style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                      <input
+                        type="checkbox"
+                        checked={checklist.includes(item)}
+                        onChange={(event) => setChecklist((current) =>
+                          event.target.checked ? [...current, item] : current.filter((entry) => entry !== item)
+                        )}
+                      />
+                      <span>{item}</span>
+                    </label>
+                  ))}
+                </div>
+              </section>
               <div className="modal__actions">
                 <button
                   type="button"
@@ -283,7 +319,7 @@ export function WorkerComplaintDetailPage() {
                 <button
                   type="button"
                   className="btn btn--primary"
-                  disabled={busy}
+                  disabled={busy || checklist.length !== completionChecklist.length}
                   onClick={handleMarkCompleted}
                 >
                   {busy ? "Submitting..." : "Mark as Completed"}

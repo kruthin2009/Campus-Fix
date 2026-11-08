@@ -3,8 +3,9 @@ import { useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { listActiveTowers } from "../../services/towerService";
 import { listActiveDepartments } from "../../services/departmentService";
-import { submitReport } from "../../services/reportService";
+import { findPotentialDuplicateReports, submitReport } from "../../services/reportService";
 import { isMediaUploadEnabled } from "../../services/mediaService";
+import { suggestComplaintClassification, type AiClassification } from "../../services/aiService";
 import { ErrorState, LoadingScreen } from "../../components/common/Common";
 import type { Department, ReportPriority, StudentProfile, Tower } from "../../types/models";
 
@@ -25,6 +26,9 @@ export function RaiseComplaintPage() {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [priority, setPriority] = useState<ReportPriority>("medium");
+  const [aiSuggestion, setAiSuggestion] = useState<AiClassification | null>(null);
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiError, setAiError] = useState<string | null>(null);
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -82,6 +86,26 @@ export function RaiseComplaintPage() {
 
     setSubmitting(true);
     try {
+      const possibleDuplicates = await findPotentialDuplicateReports({
+        studentId: student.uid,
+        towerId: tower.id,
+        roomNumber,
+        departmentId: department.id,
+        title,
+        description,
+      });
+      if (possibleDuplicates.length > 0) {
+        const summary = possibleDuplicates
+          .map((item) => `• ${item.title} (${item.status.replace("_", " ")})`)
+          .join("\\n");
+        const continueAnyway = window.confirm(
+          `You may already have a similar active complaint for this room:\\n\\n${summary}\\n\\nDo you still want to submit a new complaint?`
+        );
+        if (!continueAnyway) {
+          setSubmitting(false);
+          return;
+        }
+      }
       const reportId = await submitReport({
         studentId: student.uid,
         studentName: student.name,
@@ -167,6 +191,36 @@ export function RaiseComplaintPage() {
             placeholder="Describe the issue in detail..."
           />
         </label>
+
+        <div className="ai-suggestion-panel">
+          <button
+            type="button"
+            className="btn btn--secondary"
+            disabled={aiLoading || !title.trim() || !description.trim() || departments.length === 0}
+            onClick={async () => {
+              setAiLoading(true); setAiError(null); setAiSuggestion(null);
+              try {
+                const suggestion = await suggestComplaintClassification({ title, description, departments: departments.map((d) => d.name) });
+                setAiSuggestion(suggestion);
+              } catch (err) {
+                setAiError(err instanceof Error ? err.message : "AI suggestion is unavailable.");
+              } finally { setAiLoading(false); }
+            }}
+          >{aiLoading ? "Analysing complaint..." : "Get AI category & priority suggestion"}</button>
+          {aiSuggestion && <div className="ai-suggestion-result" role="status">
+            <strong>AI suggestion: {aiSuggestion.category}</strong>
+            <span>Priority: {aiSuggestion.priority} · Confidence: {aiSuggestion.confidence}%</span>
+            <small>{aiSuggestion.reason}</small>
+            {aiSuggestion.safetyFlag && <small className="ai-safety-note">Possible safety concern detected. Keep away from the hazard and contact campus security or emergency services if there is immediate danger.</small>}
+            <button type="button" className="btn btn--primary" onClick={() => {
+              const match = departments.find((d) => d.name === aiSuggestion.category);
+              if (match) setDepartmentId(match.id);
+              setPriority(aiSuggestion.priority);
+            }}>Apply suggestion</button>
+          </div>}
+          {aiError && <small className="form-error" role="alert">{aiError}</small>}
+          <small className="field-help">AI suggestions are optional. Review and edit the category and priority before submitting.</small>
+        </div>
 
         <label className="field">
           <span>Priority</span>

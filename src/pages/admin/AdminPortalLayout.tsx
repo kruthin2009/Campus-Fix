@@ -9,6 +9,7 @@ const NAV_ITEMS: NavItem[] = [
   { to: "/admin/teams", label: "Teams", icon: "👥" },
   { to: "/admin/complaints", label: "Complaints", icon: "📋" },
   { to: "/admin/smart", label: "Smart Center", icon: "🧠" },
+  { to: "/admin/campus-intelligence", label: "Campus Intelligence", icon: "🗺️" },
   { to: "/admin/operations", label: "Operations", icon: "📈" },
   { to: "/admin/announcements", label: "Announcements", icon: "📢" },
   { to: "/admin/notifications", label: "Notifications", icon: "🔔" },
