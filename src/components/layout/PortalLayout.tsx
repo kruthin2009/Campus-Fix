@@ -88,7 +88,7 @@ export function PortalLayout({
             ☰
           </button>
           <div className="portal-topbar__spacer" />
-          <span className="portal-version-badge">V1.10.2</span>
+          <span className="portal-version-badge">V2.0.4</span>
           <ThemeToggle />
           <NotificationBell />
           <div className="portal-topbar__user">
@@ -102,7 +102,7 @@ export function PortalLayout({
           </div>
         </header>
         <main className="portal-content">{children}</main>
-        <footer className="portal-footer"><span>CampusFix · V1.10.2</span><span><a href="/policies">Policies</a> · <a href="/privacy">Privacy</a> · <a href="/terms">Terms</a> · <a href="/policies/rules">Rules</a></span></footer>
+        <footer className="portal-footer"><span>CampusFix · V2.0.4</span><span><a href="/policies">Policies</a> · <a href="/privacy">Privacy</a> · <a href="/terms">Terms</a> · <a href="/policies/rules">Rules</a></span></footer>
       </div>
     </div>
   );

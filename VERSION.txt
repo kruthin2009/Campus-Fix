@@ -1,4 +1,2 @@
-CampusFix
-Version: V1.10.2
-Release patch: V1.10.2-r3
-Purpose: visible version and policy/rules access on public home and login; service-worker update reliability.
+CampusFix V2.0.4 — Policy Draft Integration & Theme Contrast Refinement
+Release status: source changes prepared; production build, browser visual QA, Firebase rules tests and live deployment remain pending.

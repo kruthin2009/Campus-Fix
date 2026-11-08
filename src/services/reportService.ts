@@ -39,6 +39,91 @@ function reportUpdatesRef(reportId: string) {
   return typedSubcollection<ReportUpdate>(REPORTS, reportId, UPDATES);
 }
 
+
+/**
+ * Advisory duplicate check: only checks the student's active reports for the
+ * same tower, room and department. It warns but never blocks submission.
+ */
+export async function findPotentialDuplicateReports(input: {
+  studentId: string; towerId: string; roomNumber: string;
+  departmentId: string; title: string; description: string;
+}): Promise<Report[]> {
+  try {
+    const q = query(typedCollection<Report>(REPORTS), where("studentId", "==", input.studentId));
+    const snapshot = await getDocs(q);
+    const active: ReportStatus[] = ["submitted", "assigned", "in_progress"];
+    const words = [...new Set(`${input.title} ${input.description}`.toLowerCase().split(/[^a-z0-9]+/).filter(w => w.length > 3))];
+    return snapshot.docs.map(d => d.data()).filter(r => {
+      if (!active.includes(r.status) || r.towerId !== input.towerId ||
+          r.roomNumber.trim().toLowerCase() !== input.roomNumber.trim().toLowerCase() ||
+          r.departmentId !== input.departmentId) return false;
+      const existing = `${r.title} ${r.description}`.toLowerCase();
+      const overlap = words.filter(w => existing.includes(w)).length;
+      return words.length > 0 && overlap >= Math.min(2, words.length);
+    }).slice(0, 3);
+  } catch (error) {
+    console.warn("Duplicate check unavailable; allowing complaint submission.", error);
+    return [];
+  }
+}
+
+export interface ReopenRequest {
+  id: string;
+  message: string;
+  status: "pending" | "approved" | "declined";
+  requestedBy: string;
+  requestedAt?: import("firebase/firestore").Timestamp;
+  reviewedBy?: string;
+  reviewedAt?: import("firebase/firestore").Timestamp;
+}
+
+export async function requestReportReopen(report: Report, studentId: string, message: string): Promise<void> {
+  if (report.studentId !== studentId) throw new Error("You can only request reopening your own complaint.");
+  if (!["closed", "rejected"].includes(report.status)) throw new Error("Only closed or rejected complaints can be reopened.");
+  const requests = typedSubcollection<ReopenRequest>(REPORTS, report.id, "reopenRequests");
+  const existing = await getDocs(query(requests, where("status", "==", "pending")));
+  if (!existing.empty) throw new Error("A reopening request is already pending.");
+  await addDoc(requests, {
+    id: "",
+    message: message.trim(),
+    status: "pending",
+    requestedBy: studentId,
+    requestedAt: serverTimestamp() as unknown as ReopenRequest["requestedAt"],
+  });
+}
+
+export async function listReopenRequests(reportId: string): Promise<ReopenRequest[]> {
+  const snapshot = await getDocs(typedSubcollection<ReopenRequest>(REPORTS, reportId, "reopenRequests"));
+  return snapshot.docs.map(d => d.data()).filter(r => r.status === "pending");
+}
+
+export async function reviewReopenRequest(
+  report: Report, requestId: string, decision: "approved" | "declined",
+  actor: { id: string; name: string; role: UserRole }
+): Promise<void> {
+  const requestRef = doc(typedSubcollection<ReopenRequest>(REPORTS, report.id, "reopenRequests"), requestId);
+  const batch = writeBatch(db);
+  batch.update(requestRef, { status: decision, reviewedBy: actor.id, reviewedAt: serverTimestamp() });
+  if (decision === "approved") {
+    batch.update(doc(db, REPORTS, report.id), { status: "submitted", updatedAt: serverTimestamp() });
+    const updateRef = doc(reportUpdatesRef(report.id));
+    batch.set(updateRef, {
+      id: updateRef.id, message: "Complaint reopened after student request",
+      statusAtUpdate: "submitted", authorId: actor.id, authorName: actor.name,
+      authorRole: actor.role, createdAt: serverTimestamp(),
+    });
+  }
+  await batch.commit();
+  await createNotification({
+    userId: report.studentId, type: "report_updated",
+    title: decision === "approved" ? "Complaint reopened" : "Reopening request declined",
+    message: decision === "approved"
+      ? `Your complaint "${report.title}" has been reopened for review.`
+      : `Your request to reopen "${report.title}" was declined.`,
+    reportId: report.id,
+  });
+}
+
 // ============================================================
 // Submission (student)
 // ============================================================
@@ -506,8 +591,8 @@ export async function closeReport(
     await createNotification({
       userId: report.studentId,
       type: "report_closed",
-      title: "Complaint closed",
-      message: `Your complaint "${report.title}" has been closed.`,
+      title: "Complaint resolved",
+      message: `Your complaint "${report.title}" has been resolved and closed.`,
       reportId: report.id,
     });
   } catch (error) {
@@ -622,6 +707,7 @@ export async function markCompleted(
     photoFile?: File | null;
     completedBy: string;
     completedByName: string;
+    checklist?: string[];
   }
 ): Promise<void> {
   try {
@@ -658,6 +744,7 @@ export async function markCompleted(
         completedBy: input.completedBy,
         completedByName: input.completedByName,
         completedAt: serverTimestamp(),
+        checklist: input.checklist ?? [],
       },
       updatedAt: serverTimestamp(),
     });

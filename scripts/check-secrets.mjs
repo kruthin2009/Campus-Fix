@@ -2,6 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 
 const root = process.cwd();
+const scannerPath = path.resolve(root, "scripts", "check-secrets.mjs");
 const forbidden = /(PRIVATE_KEY|SERVICE_ACCOUNT|CLIENT_SECRET|OPENAI_API_KEY|GEMINI_API_KEY|ANTHROPIC_API_KEY|STRIPE_SECRET_KEY|AWS_SECRET_ACCESS_KEY)/i;
 const files = [];
 function walk(dir) {
@@ -16,7 +17,10 @@ function walk(dir) {
 walk(root);
 const hits = [];
 for (const file of files) {
-  if (file.endsWith("scripts/check-secrets.mjs")) continue;
+  // Exclude this scanner itself using normalized absolute paths. On Windows,
+  // path.join() produces backslashes, so endsWith("scripts/check-secrets.mjs")
+  // incorrectly treated the scanner source as an application file.
+  if (path.resolve(file) === scannerPath) continue;
   const text = fs.readFileSync(file, "utf8");
   if (forbidden.test(text)) hits.push(path.relative(root, file));
 }

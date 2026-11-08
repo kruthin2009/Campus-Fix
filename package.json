@@ -1,14 +1,15 @@
 {
   "name": "campusfix",
   "private": true,
-  "version": "1.10.2",
+  "version": "2.0.4",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "node scripts/check-secrets.mjs && tsc -b && vite build",
     "lint": "oxlint",
     "check:links": "node scripts/check-links.mjs",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "check:release": "node scripts/release-check.mjs"
   },
   "dependencies": {
     "firebase": "^12.19.0",

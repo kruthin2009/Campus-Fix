@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { useToast } from "../../context/ToastContext";
-import { subscribeToReport, submitReview } from "../../services/reportService";
+import { requestReportReopen, subscribeToReport, submitReview } from "../../services/reportService";
 import {
   ErrorState,
   LoadingScreen,
@@ -25,6 +25,8 @@ export function StudentComplaintDetailPage() {
   const [rating, setRating] = useState(0);
   const [feedback, setFeedback] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [reopenMessage, setReopenMessage] = useState("");
+  const [reopenSubmitting, setReopenSubmitting] = useState(false);
 
   useEffect(() => {
     if (!reportId) return;
@@ -46,6 +48,20 @@ export function StudentComplaintDetailPage() {
   // rendering another student's data if a stale/incorrect id were reached.
   if (firebaseUser && report.studentId !== firebaseUser.uid) {
     return <ErrorState message="You don't have access to this complaint." />;
+  }
+
+  async function handleReopenRequest() {
+    if (!firebaseUser || !report) return;
+    setReopenSubmitting(true);
+    try {
+      await requestReportReopen(report, firebaseUser.uid, reopenMessage);
+      showToast("Reopening request sent to the administration.", "success");
+      setReopenMessage("");
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : "Unable to request reopening.", "error");
+    } finally {
+      setReopenSubmitting(false);
+    }
   }
 
   async function handleSubmitReview() {
@@ -154,6 +170,20 @@ export function StudentComplaintDetailPage() {
                 onClick={handleSubmitReview}
               >
                 {submitting ? "Submitting..." : "Submit Review"}
+              </button>
+            </section>
+          )}
+
+          {(report.status === "closed" || report.status === "rejected") && (
+            <section className="card">
+              <h3>Need this complaint reopened?</h3>
+              <p className="muted">If the issue is still unresolved, send a request to the administration for review.</p>
+              <label className="field">
+                <span>Reason (optional)</span>
+                <textarea rows={3} value={reopenMessage} onChange={(e) => setReopenMessage(e.target.value)} maxLength={500} placeholder="Explain why this complaint needs another review..." />
+              </label>
+              <button className="btn btn--primary btn--block" disabled={reopenSubmitting} onClick={handleReopenRequest}>
+                {reopenSubmitting ? "Sending request..." : "Request Reopening"}
               </button>
             </section>
           )}

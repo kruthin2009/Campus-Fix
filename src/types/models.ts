@@ -155,6 +155,7 @@ export interface Report {
     completedBy: string;
     completedByName: string;
     completedAt: Timestamp;
+    checklist?: string[];
   } | null;
 
   review?: {

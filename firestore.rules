@@ -28,7 +28,17 @@ service cloud.firestore {
       allow create: if student()
         && request.resource.data.studentId == request.auth.uid
         && request.resource.data.status == 'submitted'
-        && request.resource.data.keys().hasAll(['studentId','studentName','studentRoomNumber','towerId','towerName','roomNumber','departmentId','departmentName','title','description','priority','status','photoUrl','assignedTeamId','assignedTeamName','assignedWorkerId','assignedWorkerName','resolution','review','createdAt','updatedAt']);
+        && request.resource.data.priority in ['low', 'medium', 'high', 'urgent']
+        && request.resource.data.keys().hasAll(['studentId','studentName','studentRoomNumber','towerId','towerName','roomNumber','departmentId','departmentName','title','description','priority','status','photoUrl','assignedTeamId','assignedTeamName','assignedWorkerId','assignedWorkerName','resolution','review','createdAt','updatedAt'])
+        && request.resource.data.keys().hasOnly(['id','studentId','studentName','studentRoomNumber','towerId','towerName','roomNumber','departmentId','departmentName','title','description','priority','status','photoUrl','assignedTeamId','assignedTeamName','assignedWorkerId','assignedWorkerName','resolution','review','createdAt','updatedAt'])
+        && request.resource.data.title is string && request.resource.data.title.size() > 0 && request.resource.data.title.size() <= 120
+        && request.resource.data.description is string && request.resource.data.description.size() > 0 && request.resource.data.description.size() <= 3000
+        && request.resource.data.roomNumber is string && request.resource.data.roomNumber.size() <= 40
+        && request.resource.data.studentName is string && request.resource.data.studentName.size() <= 100
+        && request.resource.data.towerId is string && request.resource.data.departmentId is string
+        && (request.resource.data.photoUrl == null || request.resource.data.photoUrl is string)
+        && request.resource.data.assignedTeamId == null
+        && request.resource.data.assignedWorkerId == null;
       allow update: if admin()
         || (worker() && workerCanSee(resource.data) && changedOnly(['status','resolution','updatedAt']))
         || (student() && resource.data.studentId == request.auth.uid && resource.data.status == 'completed' && changedOnly(['review','updatedAt']));
@@ -38,6 +48,21 @@ service cloud.firestore {
         allow read: if admin() || (student() && get(/databases/$(database)/documents/reports/$(id)).data.studentId == request.auth.uid) || (worker() && workerCanSee(get(/databases/$(database)/documents/reports/$(id)).data));
         allow create: if admin() || (worker() && workerCanSee(get(/databases/$(database)/documents/reports/$(id)).data));
         allow update, delete: if false;
+      }
+
+      match /reopenRequests/{requestId} {
+        function reportOwner() {
+          return student() && get(/databases/$(database)/documents/reports/$(id)).data.studentId == request.auth.uid;
+        }
+        allow read: if admin() || (reportOwner() && resource.data.requestedBy == request.auth.uid);
+        allow create: if reportOwner()
+          && request.resource.data.requestedBy == request.auth.uid
+          && request.resource.data.status == 'pending'
+          && request.resource.data.keys().hasOnly(['id','message','status','requestedBy','requestedAt']);
+        allow update: if admin()
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status','reviewedBy','reviewedAt'])
+          && request.resource.data.status in ['approved','declined'];
+        allow delete: if false;
       }
     }
 
