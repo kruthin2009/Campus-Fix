@@ -4,7 +4,7 @@ import { resolve } from 'node:path';
 const required = [
   'package.json', 'package-lock.json', 'index.html',
   'src/main.tsx', 'src/App.tsx', 'firestore.rules', 'storage.rules',
-  'api/ai.ts', '.env.example', 'README.md',
+  'api/ai.ts', 'api/ai-news.ts', '.env.example', 'README.md',
 ];
 const missing = required.filter((file) => !existsSync(resolve(file)));
 if (missing.length) {
@@ -12,8 +12,8 @@ if (missing.length) {
   process.exit(1);
 }
 const pkg = JSON.parse(readFileSync('package.json', 'utf8'));
-if (pkg.version !== '2.0.4') {
-  console.error(`Expected package version 2.0.4; found ${pkg.version ?? 'unset'}`);
+if (pkg.version !== '2.0.7') {
+  console.error(`Expected package version 2.0.7; found ${pkg.version ?? 'unset'}`);
   process.exit(1);
 }
 if (!pkg.scripts?.build || !pkg.scripts?.['check:links']) {

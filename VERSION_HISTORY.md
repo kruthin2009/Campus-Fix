@@ -1,3 +1,13 @@
+## V2.0.5 — Final usability, AI severity and account recovery pass
+
+- Mobile portal top bar and dashboard spacing improved; controls wrap safely on narrow screens.
+- Theme-aware AI suggestion surfaces and readable success/error/info toast notifications added for both light and dark themes.
+- Complaint submission now attempts AI classification automatically and saves the returned category and priority. If the AI endpoint is unavailable, submission continues with the student's chosen values and shows a clear notice.
+- Forgot-password route retained and reset-email screen copy/autofill improved; Firebase Authentication continues to send the secure reset email.
+- Firestore student self-registration rules now constrain profile fields and validate required student profile values; student self-updates cannot change account identity or role.
+- Existing portal features, complaint workflow, navigation and branding are retained.
+- Local production build and live Firebase deployment must be run against the target environment before release sign-off.
+
 # CampusFix — Version history
 
 ## V2.0.4 — Policy Draft Integration & Theme Contrast Refinement
@@ -42,3 +52,21 @@
 - Fixed missing imports for `listReopenRequests`, `reviewReopenRequest`, and the `ReopenRequest` type in `AdminComplaintDetailPage.tsx`.
 - No runtime behavior or unrelated features changed.
 - Production build must be rerun locally after dependency installation.
+
+
+## V2.0.6 — Final Worker, Media & AI News Release
+- Added worker-facing announcements and maintenance schedule views, plus a dedicated latest AI news feed sourced through a cached serverless RSS endpoint.
+- Added worker dashboard quick links and workflow guidance; administrators can target announcements to everyone, students or workers. Student and worker announcement views filter by audience and active dates.
+- Made selected complaint and completion photos fail visibly if storage fails instead of silently discarding the selected image. Images are validated and resized/compressed to WebP where supported before upload.
+- Storage locations: student evidence at `reports/{studentUid}/{timestamp}-{filename}`; worker completion evidence at `reports/{reportId}/completion-{timestamp}-{filename}`. The existing Storage rules enforce student ownership and worker/team assignment.
+- Added a 15-minute shared cache for the AI news RSS endpoint and long-lived caching for immutable uploaded images.
+- Verification boundary: source edits and static release checks only; production TypeScript/Vite build, Firebase Storage/Firestore emulator tests, real-device upload tests and Vercel deployment must be completed in the project environment. No zero-lag guarantee is made.
+
+
+## V2.0.7 — Runtime, API and Theme Reliability Hotfix
+- Service worker now bypasses API routes and no longer caches the application HTML shell or arbitrary GET responses; this prevents stale application bundles and cached SPA responses from breaking AI/news JSON parsing.
+- AI and AI-news clients now validate response bodies before parsing and show actionable endpoint errors rather than raw JSON parser exceptions.
+- Refined the shared light/dark design tokens to use softer slate surfaces and restrained blue accents instead of near-black/white extremes.
+- Admin reopen-request imports were already present in the supplied source; the service-worker update strategy addresses stale deployed bundles as a likely cause of the browser runtime showing an older missing-function error.
+
+- Firestore reopen-request reads now permit the owner of the parent complaint to query their own request subcollection; this fixes a rules/query mismatch where the client filters by pending status but Firestore rules required an additional requestedBy filter. Admin review remains role-restricted.

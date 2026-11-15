@@ -1,2 +1,1 @@
-CampusFix V2.0.4 — Policy Draft Integration & Theme Contrast Refinement
-Release status: source changes prepared; production build, browser visual QA, Firebase rules tests and live deployment remain pending.
+CampusFix V2.0.7 — Runtime, API and Theme Reliability Hotfix

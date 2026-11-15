@@ -15,6 +15,7 @@ export function AdminAnnouncementsPage() {
   const [items, setItems] = useState<Announcement[]>([]);
   const [title, setTitle] = useState("");
   const [message, setMessage] = useState("");
+  const [audience, setAudience] = useState<"all" | "students" | "workers">("all");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
@@ -28,8 +29,8 @@ export function AdminAnnouncementsPage() {
     if (!title.trim() || !message.trim()) { showToast("Enter an announcement title and message.", "error"); return; }
     setSaving(true);
     try {
-      await createAnnouncement({ title: title.trim(), message: message.trim(), audience: "all", towerId: null, startsAt: new Date(), expiresAt: null, isActive: true, createdBy: profile?.uid ?? "", createdByName: profile?.name ?? "CampusFix Administrator" });
-      setTitle(""); setMessage(""); await load();
+      await createAnnouncement({ title: title.trim(), message: message.trim(), audience, towerId: null, startsAt: new Date(), expiresAt: null, isActive: true, createdBy: profile?.uid ?? "", createdByName: profile?.name ?? "CampusFix Administrator" });
+      setTitle(""); setMessage(""); setAudience("all"); await load();
       showToast("Announcement published.", "success");
     } catch (e) { showToast(e instanceof Error ? e.message : "Unable to publish announcement.", "error"); }
     finally { setSaving(false); }
@@ -40,8 +41,9 @@ export function AdminAnnouncementsPage() {
     {error && <div className="alert alert--error">{error}</div>}
     <section className="card">
       <h2>Add Announcement</h2>
-      <p className="muted">Announcements published here appear on the student Announcements page.</p>
+      <p className="muted">Choose whether the announcement is for everyone, students only or workers only.</p>
       <label className="field"><span>Title *</span><input className="input" value={title} onChange={e => setTitle(e.target.value)} placeholder="Water supply update" /></label>
+      <label className="field"><span>Audience</span><select className="input" value={audience} onChange={e => setAudience(e.target.value as "all" | "students" | "workers")}><option value="all">Everyone</option><option value="students">Students only</option><option value="workers">Workers only</option></select></label>
       <label className="field"><span>Message *</span><textarea className="input" rows={5} value={message} onChange={e => setMessage(e.target.value)} placeholder="Write the campus update..." /></label>
       <button className="btn btn--primary" disabled={saving} onClick={publish}>{saving ? "Publishing..." : "Publish Announcement"}</button>
     </section>

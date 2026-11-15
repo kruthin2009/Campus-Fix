@@ -29,6 +29,7 @@ export function RaiseComplaintPage() {
   const [aiSuggestion, setAiSuggestion] = useState<AiClassification | null>(null);
   const [aiLoading, setAiLoading] = useState(false);
   const [aiError, setAiError] = useState<string | null>(null);
+  const [aiAppliedOnSubmit, setAiAppliedOnSubmit] = useState(false);
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -106,6 +107,37 @@ export function RaiseComplaintPage() {
           return;
         }
       }
+      // Automatically request AI classification during submission. A failed AI
+      // request must never prevent a student from reporting a maintenance issue.
+      let finalPriority = priority;
+      let finalDepartment = department;
+      let classification = aiSuggestion;
+      setAiAppliedOnSubmit(false);
+      if (!classification) {
+        setAiLoading(true);
+        setAiError(null);
+        try {
+          classification = await suggestComplaintClassification({
+            title,
+            description,
+            departments: departments.map((item) => item.name),
+          });
+        } catch (aiErr) {
+          setAiError(aiErr instanceof Error
+            ? `AI classification was unavailable. Your selected category and priority will be used. (${aiErr.message})`
+            : "AI classification was unavailable. Your selected category and priority will be used.");
+        } finally {
+          setAiLoading(false);
+        }
+      }
+      if (classification) {
+        const suggestedDepartment = departments.find((item) => item.name === classification?.category);
+        if (suggestedDepartment) finalDepartment = suggestedDepartment;
+        finalPriority = classification.priority;
+        setAiSuggestion(classification);
+        setAiAppliedOnSubmit(true);
+      }
+
       const reportId = await submitReport({
         studentId: student.uid,
         studentName: student.name,
@@ -113,11 +145,11 @@ export function RaiseComplaintPage() {
         towerId: tower.id,
         towerName: tower.name,
         roomNumber,
-        departmentId: department.id,
-        departmentName: department.name,
+        departmentId: finalDepartment.id,
+        departmentName: finalDepartment.name,
         title,
         description,
-        priority,
+        priority: finalPriority,
         photoFile,
       });
       navigate(`/student/confirmation/${reportId}`, { replace: true });
@@ -218,8 +250,9 @@ export function RaiseComplaintPage() {
               setPriority(aiSuggestion.priority);
             }}>Apply suggestion</button>
           </div>}
-          {aiError && <small className="form-error" role="alert">{aiError}</small>}
-          <small className="field-help">AI suggestions are optional. Review and edit the category and priority before submitting.</small>
+          {aiError && <small className="ai-inline-message" role="status">{aiError}</small>}
+          {aiAppliedOnSubmit && <small className="ai-inline-success" role="status">AI classification applied to this complaint: {aiSuggestion?.priority} priority.</small>}
+          <small className="field-help">CampusFix attempts AI category and severity classification automatically when you submit. You can also request a preview above. If AI is unavailable, your selected category and priority are used.</small>
         </div>
 
         <label className="field">
@@ -240,13 +273,12 @@ export function RaiseComplaintPage() {
           <span>Photo <em>(Optional)</em></span>
           <input
             type="file"
-            accept="image/*"
+            accept="image/jpeg,image/png,image/webp"
             onChange={(e) => setPhotoFile(e.target.files?.[0] ?? null)}
           />
-          <small className="field-help">You can submit without a photo. Adding one is completely optional.</small>
-          {!isMediaUploadEnabled() && (
-            <small className="field-help">Photo storage is not enabled right now, so a selected image will not be required for submission.</small>
-          )}
+          <small className="field-help">Optional evidence photo. Stored securely in Firebase Storage under <code>reports/{studentId}/</code>. JPG, PNG or WebP, maximum 5 MB.</small>
+          {photoFile && <small className="field-help">Selected: {photoFile.name} ({(photoFile.size / 1024 / 1024).toFixed(2)} MB)</small>}
+          {!isMediaUploadEnabled() && <small className="field-help">Photo uploads are currently disabled by the administrator.</small>}
         </label>
 
         {error && (

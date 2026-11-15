@@ -5,7 +5,9 @@ import App from "./App";
 
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("/sw.js").catch((error) => {
+    navigator.serviceWorker.register("/sw.js", { updateViaCache: "none" }).then((registration) => {
+      registration.update().catch(() => undefined);
+    }).catch((error) => {
       console.warn("CampusFix service worker registration failed:", error);
     });
   });
