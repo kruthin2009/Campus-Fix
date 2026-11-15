@@ -14,8 +14,16 @@ service cloud.firestore {
 
     match /users/{uid} {
       allow read: if owner(uid) || admin();
-      allow create: if (admin() && (request.resource.data.role == 'operations' || request.resource.data.role == 'administrative' || request.resource.data.role == 'administrator')) || (owner(uid) && request.resource.data.uid == uid && request.resource.data.role == 'student');
-      allow update: if admin() || (owner(uid) && changedOnly(['name','phone','department','roomNumber','className','semester','updatedAt']));
+      allow create: if (admin() && (request.resource.data.role == 'operations' || request.resource.data.role == 'administrative' || request.resource.data.role == 'administrator')) || (owner(uid)
+        && request.resource.data.uid == uid
+        && request.resource.data.role == 'student'
+        && request.resource.data.keys().hasOnly(['id','uid','name','email','role','phone','isActive','studentId','rollNumber','roomNumber','className','semester','createdAt','updatedAt'])
+        && request.resource.data.name is string && request.resource.data.name.size() > 0 && request.resource.data.name.size() <= 100
+        && request.resource.data.email is string && request.resource.data.email.size() <= 254
+        && request.resource.data.studentId is string && request.resource.data.studentId.size() <= 40
+        && request.resource.data.rollNumber is string && request.resource.data.rollNumber.size() <= 40
+        && request.resource.data.isActive == true);
+      allow update: if admin() || (owner(uid) && resource.data.role == 'student' && request.resource.data.uid == resource.data.uid && request.resource.data.role == resource.data.role && request.resource.data.email == resource.data.email && changedOnly(['name','phone','department','roomNumber','className','semester','updatedAt']));
       allow delete: if admin();
     }
 
@@ -54,10 +62,15 @@ service cloud.firestore {
         function reportOwner() {
           return student() && get(/databases/$(database)/documents/reports/$(id)).data.studentId == request.auth.uid;
         }
-        allow read: if admin() || (reportOwner() && resource.data.requestedBy == request.auth.uid);
+        // The parent complaint owner may query their own reopen-request
+        // subcollection (including status-filtered pending requests). Access to
+        // this path is already scoped to a report owned by that student.
+        allow read: if admin() || reportOwner();
         allow create: if reportOwner()
           && request.resource.data.requestedBy == request.auth.uid
           && request.resource.data.status == 'pending'
+          && request.resource.data.message is string
+          && request.resource.data.message.size() <= 500
           && request.resource.data.keys().hasOnly(['id','message','status','requestedBy','requestedAt']);
         allow update: if admin()
           && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status','reviewedBy','reviewedAt'])
@@ -78,10 +91,20 @@ service cloud.firestore {
 
     // Campus operations modules
     match /announcements/{id} {
-      // Announcements are campus-wide but still require an authenticated CampusFix profile.
-      // Both legacy admin and the V1.10.2 administrative role may publish/manage them.
+      // Announcements are non-sensitive; clients filter by audience after loading.
+      // Firestore rules are not query filters, so all signed-in profiles may read.
       allow read: if signedIn();
-      allow create, update, delete: if admin();
+      allow create: if admin()
+        && request.resource.data.audience in ['all', 'students', 'workers', 'tower']
+        && request.resource.data.title is string
+        && request.resource.data.title.size() > 0
+        && request.resource.data.title.size() <= 140
+        && request.resource.data.message is string
+        && request.resource.data.message.size() > 0
+        && request.resource.data.message.size() <= 4000
+        && request.resource.data.isActive is bool;
+      allow update: if admin();
+      allow delete: if admin();
     }
     match /maintenanceSchedules/{id} {
       allow read: if admin() || worker();

@@ -31,13 +31,13 @@ export function ForgotPasswordPage() {
       <div className="auth-card">
         <div className="auth-card__brand">
           <span className="auth-card__logo">CF</span>
-          <h1>Reset Password</h1>
+          <h1>Forgot Password?</h1>
         </div>
+        <p className="auth-card__subtitle">Enter the email address linked to your CampusFix account. Firebase will email you a secure password-reset link.</p>
 
         {sent ? (
           <div className="form-success">
-            If an account exists for that email, a password reset link has
-            been sent.
+            If an account exists for that email, Firebase has sent a password-reset link. Check your inbox and spam folder, then follow the link to choose a new password.
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="auth-form">
@@ -46,6 +46,7 @@ export function ForgotPasswordPage() {
               <input
                 type="email"
                 required
+                autoComplete="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
               />

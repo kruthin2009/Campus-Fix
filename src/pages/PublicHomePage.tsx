@@ -90,7 +90,7 @@ export function PublicHomePage() {
       <section className="public-hero v2-hero">
         <div className="v2-hero-grid" aria-hidden="true" />
         <div className="public-hero__content v2-hero-copy">
-          <div className="v2-eyebrow"><span className="v2-eyebrow-dot" /> CAMPUS SERVICE MANAGEMENT <span className="v2-version">V2.0.4</span></div>
+          <div className="v2-eyebrow"><span className="v2-eyebrow-dot" /> CAMPUS SERVICE MANAGEMENT <span className="v2-version">V2.0.6</span></div>
           <h1>Campus issues,<br /><em>handled better.</em></h1>
           <p className="public-hero__text">A single, accountable place to report campus issues, route work to the right people, and follow every update through to resolution.</p>
           <div className="v2-hero-actions">
@@ -104,7 +104,7 @@ export function PublicHomePage() {
           <div className="v2-window">
             <div className="v2-window-top"><div className="v2-window-brand"><span>CF</span><b>CampusFix</b></div><span className="v2-window-live"><i /> LIVE OVERVIEW</span></div>
             <div className="v2-window-body">
-              <div className="v2-window-intro"><div><small>OPERATIONS SNAPSHOT</small><strong>Campus at a glance</strong></div><span>V2.0.4</span></div>
+              <div className="v2-window-intro"><div><small>OPERATIONS SNAPSHOT</small><strong>Campus at a glance</strong></div><span>V2.0.6</span></div>
               <div className="v2-window-stat-grid">
                 <div><small>Active requests</small><strong>{statsAvailable ? stats.activeComplaints : "—"}</strong><span className="v2-stat-caption">Currently in the workflow</span></div>
                 <div><small>Resolved</small><strong>{statsAvailable ? stats.completedComplaints + stats.closedComplaints : "—"}</strong><span className="v2-stat-caption">Completed or closed</span></div>
@@ -148,7 +148,7 @@ export function PublicHomePage() {
 
       <section className="v2-policy-section"><div><p className="public-kicker">TRUST & TRANSPARENCY</p><h2>Clear rules.<br /><em>Responsible operations.</em></h2><p>Review how CampusFix handles access, privacy, acceptable use, and platform responsibilities.</p></div><div className="v2-policy-links"><Link to="/policies"><span>01</span><b>Policy Center</b><i>↗</i></Link><Link to="/privacy"><span>02</span><b>Privacy</b><i>↗</i></Link><Link to="/terms"><span>03</span><b>Terms & Conditions</b><i>↗</i></Link><Link to="/policies/rules"><span>04</span><b>Platform Rules</b><i>↗</i></Link></div></section>
 
-      <footer className="v2-footer"><Link className="public-brand" to="/"><span className="public-brand__mark">CF</span><span className="v2-brand-copy"><strong>CampusFix</strong><small>Campus operations, connected.</small></span></Link><span className="v2-footer-copy">A connected approach to campus service management.</span><div className="v2-footer-links"><Link to="/policies">Policies</Link><Link to="/privacy">Privacy</Link><Link to="/terms">Terms</Link><Link to="/policies/rules">Rules</Link></div><small>V2.0.4 · © 2026 CampusFix</small></footer>
+      <footer className="v2-footer"><Link className="public-brand" to="/"><span className="public-brand__mark">CF</span><span className="v2-brand-copy"><strong>CampusFix</strong><small>Campus operations, connected.</small></span></Link><span className="v2-footer-copy">A connected approach to campus service management.</span><div className="v2-footer-links"><Link to="/policies">Policies</Link><Link to="/privacy">Privacy</Link><Link to="/terms">Terms</Link><Link to="/policies/rules">Rules</Link></div><small>V2.0.6 · © 2026 CampusFix</small></footer>
     </main>
   );
 }

@@ -277,10 +277,12 @@ export function WorkerComplaintDetailPage() {
               </label>
               <label className="field">
                 <span>Completion Photo (Optional)</span>
+                <small className="field-help">Stored in Firebase Storage under <code>reports/{report.id}/</code>. JPG, PNG or WebP, maximum 5 MB.</small>
+                {completionPhoto && <small className="field-help">Selected: {completionPhoto.name} ({(completionPhoto.size / 1024 / 1024).toFixed(2)} MB)</small>}
                 {isMediaUploadEnabled() ? (
                   <input
                     type="file"
-                    accept="image/*"
+                    accept="image/jpeg,image/png,image/webp"
                     onChange={(e) => setCompletionPhoto(e.target.files?.[0] ?? null)}
                   />
                 ) : (

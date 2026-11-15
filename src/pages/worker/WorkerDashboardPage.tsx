@@ -100,9 +100,10 @@ export function WorkerDashboardPage() {
 
   return (
     <div>
-      <div className="page-header">
-        <h1>My Work</h1>
-        <p>Complaints assigned to you{worker?.teamName ? ` and ${worker.teamName}` : ""}.</p>
+      <div className="page-header worker-dashboard-hero">
+        <div><span className="muted">OPERATIONS WORKSPACE</span><h1>Welcome{worker?.name ? `, ${worker.name.split(" ")[0]}` : " back"}</h1>
+        <p>Manage assignments, record maintenance progress and stay updated{worker?.teamName ? ` with ${worker.teamName}` : ""}.</p></div>
+        <div className="worker-quick-links"><Link className="btn btn--primary" to="/worker/announcements">📢 Announcements</Link><Link className="btn btn--secondary" to="/worker/ai-news">🤖 AI News</Link></div>
       </div>
 
       {reports && (
@@ -125,6 +126,8 @@ export function WorkerDashboardPage() {
           </div>
         </div>
       )}
+
+      <section className="card worker-workflow-card"><h2>Work workflow</h2><div className="worker-workflow-steps"><span><b>01</b> Review assignment</span><span><b>02</b> Accept and start</span><span><b>03</b> Post progress</span><span><b>04</b> Complete checklist and evidence</span></div><p className="muted">Open any complaint to see its timeline, student-provided photo and completion requirements.</p></section>
 
       <div className="tab-bar">
         {BUCKETS.map((b) => (

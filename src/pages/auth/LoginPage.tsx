@@ -120,7 +120,7 @@ export function LoginPage() {
         </p>
 
         <div className="auth-release-bar" aria-label="CampusFix release information">
-          <span className="auth-release-version">V2.0.4</span>
+          <span className="auth-release-version">V2.0.6</span>
           <span>CampusFix · Public homepage refresh</span>
         </div>
         <nav className="auth-policy-links" aria-label="CampusFix policies and rules">

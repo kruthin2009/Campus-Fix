@@ -23,8 +23,21 @@ async function callAi<T>(payload: Record<string, unknown>): Promise<T> {
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
     body: JSON.stringify(payload),
   });
-  const data = await response.json() as { error?: string } & T;
-  if (!response.ok) throw new Error(data.error || "AI request failed.");
+  const raw = await response.text();
+  let data: ({ error?: string } & T) | null = null;
+  if (raw.trim()) {
+    try {
+      data = JSON.parse(raw) as { error?: string } & T;
+    } catch {
+      const contentType = response.headers.get("content-type") || "";
+      const hint = contentType.includes("text/html")
+        ? "The AI endpoint returned a webpage instead of JSON. Check that the Vercel API function is deployed."
+        : "The AI endpoint returned an incomplete response. Please try again.";
+      throw new Error(hint);
+    }
+  }
+  if (!response.ok) throw new Error(data?.error || `AI request failed (HTTP ${response.status}).`);
+  if (!data) throw new Error("The AI service returned an empty response. Check the Vercel API deployment and environment variables.");
   return data;
 }
 

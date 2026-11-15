@@ -8,6 +8,8 @@ const files = [];
 function walk(dir) {
   for (const name of fs.readdirSync(dir)) {
     if (["node_modules", ".git", "dist"].includes(name)) continue;
+    // Local environment files are intentionally excluded from scanning and must never be committed.
+    if (name === ".env.local" || (name.startsWith(".env.") && !name.endsWith(".example"))) continue;
     const full = path.join(dir, name);
     const stat = fs.statSync(full);
     if (stat.isDirectory()) walk(full);

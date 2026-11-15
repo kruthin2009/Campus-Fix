@@ -5,3 +5,5 @@ dist
 *.local
 .DS_Store
 node_modules/.tmp
+.env.*
+!.env.example

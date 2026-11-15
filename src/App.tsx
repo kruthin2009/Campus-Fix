@@ -34,6 +34,8 @@ import { AnnouncementsPage } from "./pages/student/AnnouncementsPage";
 import { WorkerPortalLayout } from "./pages/worker/WorkerPortalLayout";
 import { WorkerDashboardPage } from "./pages/worker/WorkerDashboardPage";
 import { WorkerComplaintDetailPage } from "./pages/worker/WorkerComplaintDetailPage";
+import { WorkerAnnouncementsPage } from "./pages/worker/WorkerAnnouncementsPage";
+import { WorkerAINewsPage } from "./pages/worker/WorkerAINewsPage";
 import { PublicHomePage } from "./pages/PublicHomePage";
 import { GovernancePage, PolicyPage, PoliciesIndexPage } from "./pages/legal/PolicyPage";
 import { NotFoundPage } from "./pages/NotFoundPage";
@@ -152,6 +154,8 @@ function AppRoutes() {
         }
       >
         <Route index element={<WorkerDashboardPage />} />
+        <Route path="announcements" element={<WorkerAnnouncementsPage />} />
+        <Route path="ai-news" element={<WorkerAINewsPage />} />
         <Route path="complaints/:reportId" element={<WorkerComplaintDetailPage />} />
       </Route>
 

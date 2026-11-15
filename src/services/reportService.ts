@@ -12,7 +12,7 @@ import {
 } from "firebase/firestore";
 import { db } from "../firebase/config";
 import { typedCollection, typedDoc, typedSubcollection } from "../firebase/firestore";
-import { toAppError } from "../utils/errors";
+import { AppError, toAppError } from "../utils/errors";
 import { createNotification } from "./notificationService";
 import { isMediaUploadEnabled, uploadImage } from "./mediaService";
 import type {
@@ -143,18 +143,15 @@ export async function submitReport(input: {
   photoFile?: File | null;
 }): Promise<string> {
   try {
-    // Photo upload is best-effort and NEVER blocks submission. If Storage is
-    // disabled (v1 default) or the upload fails for any reason, we simply
-    // submit without a photo.
+    // If a student selects a photo, confirm it is actually stored before
+    // creating the report. Never silently discard a selected attachment.
     let photoUrl: string | null = null;
-    if (input.photoFile && isMediaUploadEnabled()) {
-      try {
-        const path = `reports/${input.studentId}/${Date.now()}-${input.photoFile.name}`;
-        const result = await uploadImage(input.photoFile, path);
-        photoUrl = result.url;
-      } catch {
-        photoUrl = null;
-      }
+    if (input.photoFile) {
+      if (!isMediaUploadEnabled()) throw new AppError("Photo uploads are unavailable. Remove the photo or contact the administrator.", "media/disabled");
+      const safeName = input.photoFile.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+      const path = `reports/${input.studentId}/${Date.now()}-${safeName}`;
+      const result = await uploadImage(input.photoFile, path);
+      photoUrl = result.url;
     }
 
     const ref = await addDoc(typedCollection<Report>(REPORTS), {
@@ -711,17 +708,15 @@ export async function markCompleted(
   }
 ): Promise<void> {
   try {
-    // As with submission, a completion photo is optional and its absence or
-    // upload failure must never block marking the work as completed.
+    // A selected completion photo must be uploaded successfully; otherwise
+    // surface the error rather than silently losing the evidence.
     let photoUrl: string | null = null;
-    if (input.photoFile && isMediaUploadEnabled()) {
-      try {
-        const path = `reports/${report.id}/completion-${Date.now()}-${input.photoFile.name}`;
-        const result = await uploadImage(input.photoFile, path);
-        photoUrl = result.url;
-      } catch {
-        photoUrl = null;
-      }
+    if (input.photoFile) {
+      if (!isMediaUploadEnabled()) throw new AppError("Photo uploads are unavailable. Remove the photo or contact the administrator.", "media/disabled");
+      const safeName = input.photoFile.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+      const path = `reports/${report.id}/completion-${Date.now()}-${safeName}`;
+      const result = await uploadImage(input.photoFile, path);
+      photoUrl = result.url;
     }
 
     const batch = writeBatch(db);
