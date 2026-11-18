@@ -2942,7 +2942,7 @@ code, pre, kbd, samp,
   font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
 }
 
-/* No gradient fills, image overlays, glass effects or glow shadows. */
+/* Flat visual reset: no gradient backdrops, text effects or glass blur. */
 *, *::before, *::after {
   background-image: none !important;
   text-shadow: none !important;
@@ -2951,8 +2951,6 @@ code, pre, kbd, samp,
   background-clip: border-box !important;
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
-  filter: none !important;
-  box-shadow: none !important;
 }
 
 body,
@@ -3351,17 +3349,20 @@ input::placeholder, textarea::placeholder {
 }
 
 
+
+
 /* ============================================================
-   CampusFix — strict flat visual system
-   Visual-only overrides. No application logic or component markup changed.
+   CampusFix — final frontend design system
+   Visual styling only. Existing components, routes and behavior stay intact.
    ============================================================ */
+
 :root {
   --color-bg: #FAFAFA;
   --color-surface: #FFFFFF;
-  --color-border: #E2E4E8;
+  --color-border: #E4E6EA;
   --color-ink: #171A20;
-  --color-ink-soft: #555D68;
-  --color-muted: #747C87;
+  --color-ink-soft: #59616D;
+  --color-muted: #7A828E;
   --color-navy: #171A20;
   --color-navy-soft: #303640;
   --color-amber: #315EFB;
@@ -3370,6 +3371,8 @@ input::placeholder, textarea::placeholder {
   --radius-sm: 5px;
   --radius-md: 8px;
   --radius-lg: 12px;
+  --shadow-card: 0 1px 2px rgba(23, 26, 32, 0.045);
+  --shadow-pop: 0 8px 24px rgba(23, 26, 32, 0.10);
   font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   color-scheme: light;
 }
@@ -3379,89 +3382,173 @@ input::placeholder, textarea::placeholder {
   --color-surface: #171A20;
   --color-border: #2B3038;
   --color-ink: #F2F4F7;
-  --color-ink-soft: #B5BBC5;
-  --color-muted: #8C94A1;
+  --color-ink-soft: #B8BEC8;
+  --color-muted: #8D95A1;
   --color-navy: #F2F4F7;
   --color-navy-soft: #D5DAE2;
   --color-amber: #7896FF;
   --color-amber-soft: #202B4B;
   --color-accent: #7896FF;
+  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.18);
+  --shadow-pop: 0 8px 24px rgba(0, 0, 0, 0.28);
   color-scheme: dark;
 }
 
 html, body, #root { min-height: 100%; }
 body {
+  margin: 0;
   background: var(--color-bg) !important;
   color: var(--color-ink) !important;
   font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
-h1, h2, h3, h4,
+
+/* Editorial display type paired with a practical sans-serif interface. */
+h1, h2, h3, h4, h5, h6,
 .page-header h1, .page-header h2,
-.auth-card h1, .login-card h1, .login-showcase h2 {
+.auth-card h1, .login-card h1, .login-showcase h2,
+.public-home h1, .public-home h2, .public-home h3,
+.v2-home h1, .v2-home h2, .v2-home h3,
+.editorial-home h1, .editorial-home h2, .editorial-home h3 {
   color: var(--color-ink) !important;
   font-family: Georgia, "Times New Roman", serif !important;
   font-weight: 700;
   letter-spacing: -0.02em !important;
+  text-wrap: balance;
 }
-p, li, label, input, select, textarea, button {
+p, li, label, input, select, textarea, button,
+.portal-sidebar__link, .portal-topbar__name,
+.simple-table, .field > span {
   font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
-body, .auth-screen, .portal-content, .public-home, .v2-home,
-.legal-page, .not-found-page, .editorial-home {
-  background: var(--color-bg) !important;
-  color: var(--color-ink) !important;
+code, pre, kbd, samp,
+.portal-version-badge, .v2-eyebrow, .v2-version,
+.v2-metric-index, .editorial-art-kicker,
+.editorial-flow-step > span,
+.editorial-platform-list article > span,
+.editorial-process-grid article > span {
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace !important;
 }
 
-/* Flat surfaces throughout every portal and authentication screen. */
-.auth-screen {
+/* Consistent canvas and readable text across public, auth and portal views. */
+body, .auth-screen, .portal-content, .public-home, .v2-home,
+.legal-page, .not-found-page, .editorial-home,
+.public-nav, .v2-hero, .v2-feature-band, .v2-live-section,
+.v2-roles-section, .v2-policy-section, .v2-footer,
+.public-home .public-hero, .public-home .public-section,
+.public-home .public-portals, .public-home .public-footer,
+.editorial-process-section, .editorial-trust-section {
   background: var(--color-bg) !important;
+  color: var(--color-ink) !important;
+  background-image: none !important;
 }
-.auth-card, .login-card, .login-experience, .card, .panel,
-.smart-card, .smart-panel, .stat-card, .simple-table-wrapper,
-.portal-topbar, .modal, .dropdown-menu, .popover,
-.confirmation-card, .cookie-banner, .dashboard-float,
-.v2-window, .v2-feature-card, .v2-metric-card, .v2-activity-panel,
-.v2-role-card, .v2-policy-links a {
+p, li, label, .muted, .page-header p,
+.auth-card__subtitle, .public-hero__text,
+.v2-hero .public-hero__text,
+.v2-section-intro > p:last-child,
+.v2-roles-heading > p:last-child {
+  color: var(--color-ink-soft);
+}
+small, .timeline__meta, .portal-topbar__role,
+.auth-card__note, .stat-card__label {
+  color: var(--color-muted);
+}
+
+/* Shared surfaces: clean borders and a barely-there paper lift. */
+.card, .panel, .smart-card, .smart-panel, .stat-card,
+.auth-card, .login-card, .login-experience,
+.portal-topbar, .portal-footer, .dashboard-float,
+.v2-window, .v2-feature-card, .v2-metric-card,
+.v2-activity-panel, .v2-role-card, .v2-policy-links a,
+.simple-table-wrapper, .confirmation-card,
+.cookie-banner, .modal, .dropdown-menu, .popover,
+.tower-select-card, .tower-admin-card {
   background: var(--color-surface) !important;
   color: var(--color-ink) !important;
   border-color: var(--color-border) !important;
+  box-shadow: var(--shadow-card) !important;
+}
+.card, .panel, .smart-card, .smart-panel, .stat-card,
+.auth-card, .login-card, .login-experience,
+.simple-table-wrapper, .tower-select-card {
+  border-radius: var(--radius-md) !important;
+}
+.portal-topbar, .public-nav {
+  background: var(--color-surface) !important;
+  border-bottom: 1px solid var(--color-border) !important;
   box-shadow: none !important;
 }
-.portal-sidebar, .login-showcase {
+
+/* Login and registration: calm, focused, high-contrast composition. */
+.auth-screen, .auth-screen--animated {
+  background: var(--color-bg) !important;
+  background-image: none !important;
+}
+.auth-card, .login-card {
+  border: 1px solid var(--color-border) !important;
+  box-shadow: var(--shadow-pop) !important;
+}
+.auth-card__logo, .login-showcase__logo {
+  background: #303640 !important;
+  color: #FFFFFF !important;
+}
+.login-showcase {
   background: #171A20 !important;
   color: #F2F4F7 !important;
   border-color: #2B3038 !important;
 }
-.portal-sidebar__title, .portal-sidebar__link,
-.portal-sidebar__signout, .login-showcase h2,
-.login-showcase h2 em, .login-showcase__content > p,
-.login-showcase__top, .login-showcase__footer,
-.login-showcase__flow strong, .login-showcase__flow small,
-.login-showcase__flow b {
+.login-showcase h2, .login-showcase h2 em,
+.login-showcase__content > p, .login-showcase__top,
+.login-showcase__footer, .login-showcase__flow strong,
+.login-showcase__flow small, .login-showcase__flow b {
   color: #F2F4F7 !important;
 }
-.portal-sidebar__subtitle { color: #B5BBC5 !important; }
-.portal-sidebar__logo, .auth-card__logo {
+.login-showcase__flow > div {
+  background: #22262E !important;
+  border: 1px solid #3A414C !important;
+  box-shadow: none !important;
+}
+.login-showcase__orb, .login-showcase::before,
+.public-orbit, .v2-art-glow, .v2-floating-note {
+  display: none !important;
+}
+
+/* Portal navigation: restrained charcoal rail with clear active state. */
+.portal-sidebar {
+  background: #171A20 !important;
+  color: #F2F4F7 !important;
+  border-right: 1px solid #2B3038 !important;
+}
+.portal-sidebar__title, .portal-sidebar__link,
+.portal-sidebar__signout { color: #E8EBF0 !important; }
+.portal-sidebar__subtitle { color: #AEB5C0 !important; }
+.portal-sidebar__logo {
   background: #303640 !important;
   color: #FFFFFF !important;
+  border-radius: 6px !important;
 }
+.portal-sidebar__link { border-radius: 5px !important; }
+.portal-sidebar__link:hover { background: #252A32 !important; }
 .portal-sidebar__link.is-active {
   background: #303640 !important;
   color: #FFFFFF !important;
   border-left: 2px solid var(--color-accent) !important;
 }
-.login-showcase__flow > div {
-  background: #22262E !important;
-  border-color: #3A414C !important;
+.portal-sidebar__signout {
+  border: 1px solid #3A414C !important;
+  background: transparent !important;
 }
+.portal-sidebar__signout:hover { background: #252A32 !important; }
 
-/* One restrained accent for interactive controls. */
+/* Primary actions use the single accent. Secondary actions remain neutral. */
 .btn--primary, .v2-button--primary, .public-nav__login,
 .login-card .login-submit, .priority-button.is-active,
 .tab-bar__tab.is-active {
   background: var(--color-accent) !important;
   color: #FFFFFF !important;
   border-color: var(--color-accent) !important;
+  box-shadow: none !important;
 }
 .btn--primary:hover:not(:disabled),
 .v2-button--primary:hover, .public-nav__login:hover,
@@ -3471,62 +3558,112 @@ body, .auth-screen, .portal-content, .public-home, .v2-home,
   color: #FFFFFF !important;
 }
 .btn--secondary, .v2-button--secondary, .theme-toggle,
-.install-app-button, .public-nav__signout, .portal-topbar__signout {
+.install-app-button, .public-nav__signout,
+.portal-topbar__signout, .priority-button,
+.tab-bar__tab {
   background: var(--color-surface) !important;
   color: var(--color-ink) !important;
   border-color: var(--color-border) !important;
+  box-shadow: none !important;
 }
-a, .link-button, .table-link { color: var(--color-accent) !important; }
+.btn, .v2-button, .public-nav__login, .login-submit,
+.theme-toggle, .install-app-button {
+  border-radius: 6px !important;
+  font-weight: 600;
+  transition: background-color .16s ease, border-color .16s ease, color .16s ease;
+}
+a, .link-button, .table-link {
+  color: var(--color-ink) !important;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+a:hover, .link-button:hover, .table-link:hover {
+  color: var(--color-accent) !important;
+}
 :focus-visible {
   outline: 2px solid var(--color-accent) !important;
-  outline-offset: 2px;
+  outline-offset: 3px;
 }
+
+/* Inputs and tables: consistent geometry and clear interaction states. */
 input, select, textarea {
   background: var(--color-surface) !important;
   color: var(--color-ink) !important;
-  border-color: var(--color-border) !important;
+  border: 1px solid var(--color-border) !important;
+  border-radius: 6px !important;
+  box-shadow: none !important;
 }
-input::placeholder, textarea::placeholder { color: var(--color-muted) !important; }
+input:focus, select:focus, textarea:focus {
+  border-color: var(--color-accent) !important;
+  outline: none;
+}
+input::placeholder, textarea::placeholder {
+  color: var(--color-muted) !important;
+  opacity: 1;
+}
+.simple-table th {
+  color: var(--color-muted) !important;
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace !important;
+  font-size: .72rem !important;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+.simple-table td { color: var(--color-ink) !important; }
+.simple-table tr:hover td { background: rgba(127, 136, 150, .055); }
 
-/* Public homepage and login: remove all decorative gradient/glass treatments. */
-.public-home, .v2-home, .editorial-home,
-.public-nav, .v2-hero, .v2-feature-band, .v2-live-section,
+/* Status and priority chips stay informational, not decorative accents. */
+.badge--active, .badge--inactive,
+.badge--status-submitted, .badge--status-assigned,
+.badge--status-in_progress, .badge--status-completed,
+.badge--status-closed, .badge--status-rejected,
+.badge--priority-low, .badge--priority-medium,
+.badge--priority-high, .badge--priority-urgent {
+  background: #EEF0F3 !important;
+  color: #343A43 !important;
+  border: 1px solid #E1E4E8 !important;
+  border-radius: 4px !important;
+}
+.form-error {
+  background: #FCEDEC !important;
+  color: #8F3028 !important;
+  border: 1px solid #F3D4D1 !important;
+}
+.form-success {
+  background: #EAF3ED !important;
+  color: #285A3B !important;
+  border: 1px solid #D5E6DA !important;
+}
+
+/* Public product pages: editorial layout, solid surfaces and solid type. */
+.v2-hero, .v2-feature-band, .v2-live-section,
 .v2-roles-section, .v2-policy-section, .v2-footer,
 .public-home .public-hero, .public-home .public-section,
 .public-home .public-portals, .public-home .public-footer,
 .editorial-home .v2-hero, .editorial-home .v2-feature-band,
 .editorial-home .v2-roles-section, .editorial-home .v2-footer,
 .editorial-process-section, .editorial-trust-section {
-  background: var(--color-bg) !important;
-  color: var(--color-ink) !important;
   background-image: none !important;
+  box-shadow: none !important;
 }
-.v2-feature-band, .v2-roles-section,
-.editorial-home .v2-feature-band, .editorial-home .v2-roles-section {
-  background: var(--color-surface) !important;
+.v2-hero h1, .v2-section-intro h2, .v2-live-heading h2,
+.v2-roles-heading h2, .v2-policy-section h2,
+.editorial-home .v2-hero h1,
+.editorial-home .v2-section-intro h2,
+.editorial-home .editorial-section-heading h2,
+.editorial-home .v2-roles-heading h2,
+.editorial-home .editorial-trust-section h2 {
+  color: var(--color-ink) !important;
+  letter-spacing: -0.02em !important;
 }
-.public-home h1, .public-home h2, .public-home h3,
-.v2-home h1, .v2-home h2, .v2-home h3,
-.editorial-home h1, .editorial-home h2, .editorial-home h3,
+.v2-hero h1 em, .v2-section-intro h2 em,
+.v2-roles-heading h2 em, .v2-policy-section h2 em,
 .editorial-home .v2-hero h1 em,
 .editorial-home .v2-section-intro h2 em,
 .editorial-home .editorial-section-heading h2 em,
 .editorial-home .v2-roles-heading h2 em,
 .editorial-home .editorial-trust-section h2 em {
   color: var(--color-ink) !important;
-}
-.public-hero__text, .v2-hero .public-hero__text,
-.v2-section-intro > p:last-child, .v2-roles-heading > p:last-child,
-.editorial-home p, .editorial-home small {
-  color: var(--color-ink-soft) !important;
-}
-.editorial-home .public-brand__mark,
-.editorial-home .v2-eyebrow-dot,
-.editorial-home .v2-button--primary,
-.editorial-home .public-nav__login {
-  background: var(--color-accent) !important;
-  color: #FFFFFF !important;
-  border-color: var(--color-accent) !important;
+  font-style: normal;
 }
 .editorial-home .v2-brand-copy strong,
 .editorial-home .public-brand,
@@ -3538,16 +3675,17 @@ input::placeholder, textarea::placeholder { color: var(--color-muted) !important
 .editorial-home .editorial-flow-step b {
   color: var(--color-ink) !important;
 }
+.editorial-home .v2-hero .public-hero__text,
+.editorial-home .editorial-platform-list p,
+.editorial-home .editorial-process-grid p,
+.editorial-home .editorial-role-list p,
+.editorial-home .editorial-flow-step small {
+  color: var(--color-ink-soft) !important;
+}
 .editorial-home .v2-button--secondary {
   background: transparent !important;
   color: var(--color-ink) !important;
   border-color: var(--color-border) !important;
-}
-.editorial-home .editorial-role-list > a > b,
-.editorial-home .editorial-policy-links a span,
-.editorial-home .v2-proof-row b,
-.editorial-home .v2-hero h1 em {
-  color: var(--color-accent) !important;
 }
 .editorial-home .editorial-platform-list,
 .editorial-home .editorial-platform-list article,
@@ -3559,28 +3697,42 @@ input::placeholder, textarea::placeholder { color: var(--color-muted) !important
 .editorial-home .editorial-flow-step {
   border-color: var(--color-border) !important;
 }
+.editorial-home .editorial-role-list > a > b,
+.editorial-home .editorial-policy-links a span,
+.editorial-home .v2-proof-row b {
+  color: var(--color-ink-soft) !important;
+}
+.editorial-home .public-brand__mark,
+.editorial-home .v2-eyebrow-dot {
+  background: #303640 !important;
+  color: #FFFFFF !important;
+}
 
-/* Dark mode uses the requested near-black canvas and neutral surfaces. */
+/* Dark mode: exact requested canvas, neutral elevated surfaces, readable contrast. */
 :root[data-theme="dark"] body,
 :root[data-theme="dark"] .auth-screen,
+:root[data-theme="dark"] .auth-screen--animated,
 :root[data-theme="dark"] .portal-content,
 :root[data-theme="dark"] .public-home,
 :root[data-theme="dark"] .v2-home,
 :root[data-theme="dark"] .editorial-home,
 :root[data-theme="dark"] .v2-hero,
+:root[data-theme="dark"] .v2-live-section,
+:root[data-theme="dark"] .v2-policy-section,
 :root[data-theme="dark"] .editorial-process-section,
 :root[data-theme="dark"] .editorial-trust-section,
 :root[data-theme="dark"] .public-nav {
   background: #0F1115 !important;
   color: #F2F4F7 !important;
 }
-:root[data-theme="dark"] .auth-card,
-:root[data-theme="dark"] .login-card,
 :root[data-theme="dark"] .card,
 :root[data-theme="dark"] .panel,
 :root[data-theme="dark"] .smart-card,
 :root[data-theme="dark"] .smart-panel,
 :root[data-theme="dark"] .stat-card,
+:root[data-theme="dark"] .auth-card,
+:root[data-theme="dark"] .login-card,
+:root[data-theme="dark"] .login-experience,
 :root[data-theme="dark"] .simple-table-wrapper,
 :root[data-theme="dark"] .portal-topbar,
 :root[data-theme="dark"] .modal,
@@ -3598,8 +3750,8 @@ input::placeholder, textarea::placeholder { color: var(--color-muted) !important
 :root[data-theme="dark"] h2,
 :root[data-theme="dark"] h3,
 :root[data-theme="dark"] h4,
-:root[data-theme="dark"] .page-header h1,
-:root[data-theme="dark"] .page-header h2,
+:root[data-theme="dark"] h5,
+:root[data-theme="dark"] h6,
 :root[data-theme="dark"] .editorial-home h1,
 :root[data-theme="dark"] .editorial-home h2,
 :root[data-theme="dark"] .editorial-home h3 {
@@ -3611,7 +3763,7 @@ input::placeholder, textarea::placeholder { color: var(--color-muted) !important
 :root[data-theme="dark"] .muted,
 :root[data-theme="dark"] .editorial-home p,
 :root[data-theme="dark"] .editorial-home small {
-  color: #B5BBC5 !important;
+  color: #B8BEC8 !important;
 }
 :root[data-theme="dark"] input,
 :root[data-theme="dark"] select,
@@ -3624,12 +3776,62 @@ input::placeholder, textarea::placeholder { color: var(--color-muted) !important
   color: #F2F4F7 !important;
   border-color: #2B3038 !important;
 }
-:root[data-theme="dark"] .editorial-home .v2-hero h1 em,
-:root[data-theme="dark"] .editorial-home .v2-section-intro h2 em,
-:root[data-theme="dark"] .editorial-home .editorial-section-heading h2 em,
-:root[data-theme="dark"] .editorial-home .v2-roles-heading h2 em,
-:root[data-theme="dark"] .editorial-home .editorial-trust-section h2 em {
-  color: #9DB1FF !important;
+:root[data-theme="dark"] .portal-sidebar,
+:root[data-theme="dark"] .login-showcase {
+  background: #090B0F !important;
+  color: #F2F4F7 !important;
+  border-color: #2B3038 !important;
+}
+:root[data-theme="dark"] .portal-sidebar__link:hover,
+:root[data-theme="dark"] .portal-sidebar__link.is-active,
+:root[data-theme="dark"] .login-showcase__flow > div {
+  background: #22262E !important;
+  color: #F2F4F7 !important;
+  border-color: #3A414C !important;
+}
+:root[data-theme="dark"] .portal-sidebar__title,
+:root[data-theme="dark"] .portal-sidebar__link,
+:root[data-theme="dark"] .portal-sidebar__signout,
+:root[data-theme="dark"] .login-showcase h2,
+:root[data-theme="dark"] .login-showcase h2 em,
+:root[data-theme="dark"] .login-showcase__content > p,
+:root[data-theme="dark"] .login-showcase__top,
+:root[data-theme="dark"] .login-showcase__footer,
+:root[data-theme="dark"] .login-showcase__flow strong,
+:root[data-theme="dark"] .login-showcase__flow small,
+:root[data-theme="dark"] .login-showcase__flow b {
+  color: #F2F4F7 !important;
+}
+:root[data-theme="dark"] .badge--active,
+:root[data-theme="dark"] .badge--inactive,
+:root[data-theme="dark"] .badge--status-submitted,
+:root[data-theme="dark"] .badge--status-assigned,
+:root[data-theme="dark"] .badge--status-in_progress,
+:root[data-theme="dark"] .badge--status-completed,
+:root[data-theme="dark"] .badge--status-closed,
+:root[data-theme="dark"] .badge--status-rejected,
+:root[data-theme="dark"] .badge--priority-low,
+:root[data-theme="dark"] .badge--priority-medium,
+:root[data-theme="dark"] .badge--priority-high,
+:root[data-theme="dark"] .badge--priority-urgent {
+  background: #252A32 !important;
+  color: #E1E5EB !important;
+  border-color: #343B46 !important;
+}
+:root[data-theme="dark"] .form-error {
+  background: #321F20 !important;
+  color: #F2C5C1 !important;
+  border-color: #56302F !important;
+}
+:root[data-theme="dark"] .form-success {
+  background: #1D2D24 !important;
+  color: #C1E0CC !important;
+  border-color: #304A39 !important;
+}
+:root[data-theme="dark"] .simple-table th,
+:root[data-theme="dark"] .simple-table td {
+  color: #B8BEC8 !important;
+  border-color: #2B3038 !important;
 }
 :root[data-theme="dark"] .editorial-home .editorial-platform-list h3,
 :root[data-theme="dark"] .editorial-home .editorial-process-grid h3,
@@ -3642,15 +3844,35 @@ input::placeholder, textarea::placeholder { color: var(--color-muted) !important
 :root[data-theme="dark"] .editorial-home .editorial-process-grid p,
 :root[data-theme="dark"] .editorial-home .editorial-role-list p,
 :root[data-theme="dark"] .editorial-home .editorial-flow-step small {
-  color: #B5BBC5 !important;
+  color: #B8BEC8 !important;
+}
+:root[data-theme="dark"] .editorial-home .v2-button--secondary {
+  background: transparent !important;
+  color: #F2F4F7 !important;
+  border-color: #3A414C !important;
 }
 
-/* Enforce solid text rendering: no gradient-clipped or transparent text. */
-h1, h2, h3, h4, p, .public-hero__text, .v2-hero h1,
+/* Explicit solid text safeguards; no gradient-clipped or transparent text. */
+h1, h2, h3, h4, h5, h6, p,
+.public-hero__text, .v2-hero h1,
 .editorial-home h1, .editorial-home h2, .editorial-home h3 {
   background-image: none !important;
   background-clip: border-box !important;
   -webkit-background-clip: border-box !important;
   -webkit-text-fill-color: currentColor !important;
   text-shadow: none !important;
+}
+
+@media (max-width: 760px) {
+  .portal-content { padding: 1.15rem !important; }
+  .portal-topbar { padding: .75rem 1rem !important; }
+  .auth-card, .login-card { padding: 1.5rem !important; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
