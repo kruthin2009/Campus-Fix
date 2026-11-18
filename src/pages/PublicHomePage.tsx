@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Link } from "react-router-dom";
 import { ThemeToggle } from "../components/common/ThemeToggle";
@@ -11,6 +12,7 @@ export function PublicHomePage() {
   const { firebaseUser, profile, status } = useAuth();
   const navigate = useNavigate();
   const { showToast } = useToast();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const portalHref = status === "profile-missing"
     ? "/profile-missing"
@@ -31,20 +33,52 @@ export function PublicHomePage() {
 
   return (
     <main className="public-home v2-home editorial-home">
-      <nav className="public-nav v2-nav" aria-label="Main navigation">
-        <Link className="public-brand" to="/" aria-label="CampusFix home">
-          <span className="public-brand__mark">CF</span>
-          <span className="v2-brand-copy"><strong>CampusFix</strong><small>Campus operations, connected.</small></span>
+      <nav className="public-nav v2-nav campusfix-navbar" aria-label="Main navigation">
+        <Link className="public-brand campusfix-navbar__brand" to="/" aria-label="CampusFix home" onClick={() => setMobileMenuOpen(false)}>
+          <span className="public-brand__mark campusfix-navbar__mark" aria-hidden="true">CF</span>
+          <span className="v2-brand-copy campusfix-navbar__brand-copy">
+            <strong>CampusFix</strong>
+            <small>Campus operations, connected.</small>
+          </span>
         </Link>
-        <div className="public-nav__links v2-nav-links">
-          <a href="#platform">Platform</a>
-          <a href="#how-it-works">How it works</a>
-          <a href="#portals">Portals</a>
+
+        <div className="campusfix-navbar__desktop">
+          <div className="public-nav__links v2-nav-links campusfix-navbar__links">
+            <a href="#platform">Platform</a>
+            <a href="#how-it-works">How it works</a>
+            <a href="#portals">Portals</a>
+          </div>
+          <div className="campusfix-navbar__actions">
+            <ThemeToggle />
+            <InstallAppButton />
+            {firebaseUser
+              ? <button type="button" className="public-nav__signout campusfix-navbar__signout" onClick={handleSignOut}>Sign out <span aria-hidden="true">↗</span></button>
+              : <Link className="public-nav__login campusfix-navbar__login" to={portalHref}>Sign in <span aria-hidden="true">↗</span></Link>}
+          </div>
+        </div>
+
+        <div className="campusfix-navbar__mobile-actions">
           <ThemeToggle />
-          <InstallAppButton />
           {firebaseUser
-            ? <button type="button" className="public-nav__signout" onClick={handleSignOut}>Sign out <span aria-hidden="true">↗</span></button>
-            : <Link className="public-nav__login" to={portalHref}>Sign in</Link>}
+            ? <button type="button" className="public-nav__signout campusfix-navbar__mobile-signout" onClick={handleSignOut}>Sign out</button>
+            : <Link className="public-nav__login campusfix-navbar__login" to={portalHref}>Sign in</Link>}
+          <button
+            type="button"
+            className={`campusfix-navbar__menu-toggle${mobileMenuOpen ? " is-open" : ""}`}
+            aria-label={mobileMenuOpen ? "Close navigation menu" : "Open navigation menu"}
+            aria-expanded={mobileMenuOpen}
+            aria-controls="campusfix-mobile-navigation"
+            onClick={() => setMobileMenuOpen((open) => !open)}
+          >
+            <span /><span />
+          </button>
+        </div>
+
+        <div id="campusfix-mobile-navigation" className={`campusfix-navbar__mobile-menu${mobileMenuOpen ? " is-open" : ""}`} hidden={!mobileMenuOpen}>
+          <a href="#platform" onClick={() => setMobileMenuOpen(false)}>Platform <span>01</span></a>
+          <a href="#how-it-works" onClick={() => setMobileMenuOpen(false)}>How it works <span>02</span></a>
+          <a href="#portals" onClick={() => setMobileMenuOpen(false)}>Portals <span>03</span></a>
+          <div className="campusfix-navbar__mobile-install"><InstallAppButton /></div>
         </div>
       </nav>
 
