@@ -4278,3 +4278,16 @@ h1, h2, h3, h4, h5, h6, p,
   .editorial-home .campusfix-workflow-list p { max-width:100%; font-size:12px!important; }
   :root[data-theme="dark"] .editorial-home .campusfix-workflow-number { border-color:#0F1115!important; }
 }
+
+/* Keep the step numbers visible within the timeline markers. */
+.editorial-home .campusfix-workflow-list::before { top:11px; }
+.editorial-home .campusfix-workflow-number {
+  width:23px; height:23px; margin-bottom:17px!important;
+  border-width:2px!important; color:#FFFFFF!important;
+  font:700 7px/1 ui-monospace,SFMono-Regular,Consolas,monospace!important;
+  letter-spacing:-.04em;
+}
+@media(max-width:720px) {
+  .editorial-home .campusfix-workflow-list::before { top:11px; left:10px; }
+  .editorial-home .campusfix-workflow-number { margin:0!important; }
+}
