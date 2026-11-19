@@ -94,15 +94,18 @@ export function PublicHomePage() {
           </div>
           <div className="v2-proof-row"><span><b>✓</b> Easy issue reporting</span><span><b>✓</b> Clear responsibility</span><span><b>✓</b> Visible progress</span></div>
         </div>
-        <div className="editorial-hero-art campusfix-workflow" aria-label="The four steps in the CampusFix request process">
-          <div className="editorial-art-kicker">FROM FIRST REPORT TO FINISHED WORK</div>
-          <div className="editorial-flow">
-            <div className="editorial-flow-step"><span>01</span><div><b>Report</b><small>Tell us what needs attention</small></div><i aria-hidden="true">↗</i></div>
-            <div className="editorial-flow-step"><span>02</span><div><b>Assign</b><small>Put the right team in charge</small></div><i aria-hidden="true">↗</i></div>
-            <div className="editorial-flow-step"><span>03</span><div><b>Update</b><small>Keep progress in one place</small></div><i aria-hidden="true">↗</i></div>
-            <div className="editorial-flow-step"><span>04</span><div><b>Resolve</b><small>Record the completed work</small></div><i aria-hidden="true">✓</i></div>
+        <div className="editorial-hero-art campusfix-workflow" aria-label="How CampusFix handles a campus request">
+          <div className="campusfix-workflow-heading">
+            <span className="editorial-art-kicker">A STRAIGHTFORWARD PROCESS</span>
+            <h2>One request. Four clear steps.</h2>
+            <p>From the first report to the work being completed.</p>
           </div>
-          <p className="editorial-art-note">One request. One clear owner. A better campus experience.</p>
+          <ol className="campusfix-workflow-list">
+            <li><span className="campusfix-workflow-number">01</span><div><h3>Report</h3><p>Tell us what needs attention.</p></div></li>
+            <li><span className="campusfix-workflow-number">02</span><div><h3>Assign</h3><p>The right team takes responsibility.</p></div></li>
+            <li><span className="campusfix-workflow-number">03</span><div><h3>Update</h3><p>Progress is recorded as work moves forward.</p></div></li>
+            <li><span className="campusfix-workflow-number">04</span><div><h3>Resolve</h3><p>The completed work is documented.</p></div></li>
+          </ol>
         </div>
         <div className="v2-hero-bottom"><span>BUILT FOR CAMPUS COMMUNITIES</span><span>REPORT <i>·</i> ASSIGN <i>·</i> UPDATE <i>·</i> RESOLVE</span></div>
       </section>
