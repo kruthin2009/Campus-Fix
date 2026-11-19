@@ -85,7 +85,7 @@ export function PublicHomePage() {
       <section className="public-hero v2-hero editorial-hero campusfix-hero">
         <div className="v2-hero-grid" aria-hidden="true" />
         <div className="public-hero__content v2-hero-copy campusfix-hero__copy">
-          <div className="v2-eyebrow"><span className="v2-eyebrow-dot" /> CAMPUS SERVICE MANAGEMENT <span className="v2-version">V2.1.1</span></div>
+          <div className="v2-eyebrow">CAMPUS SERVICE MANAGEMENT</div>
           <h1>A campus that<br /><em>works better.</em></h1>
           <p className="public-hero__text">One place to report a campus issue, understand who is responsible, and follow the work through to completion. CampusFix brings students, administrators, and campus teams into one clear process.</p>
           <div className="v2-hero-actions">
